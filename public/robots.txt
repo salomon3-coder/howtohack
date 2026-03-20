@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Keep this URL in sync with your production domain.
+Sitemap: https://howtohack.net/sitemap-index.xml

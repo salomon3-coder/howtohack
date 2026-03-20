@@ -1,0 +1,50 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+const pageTitle = 'Como reiniciar un router en 5 pasos';
+const pageDescription = 'Tutorial breve para reiniciar un router sin perder configuracion.';
+
+const howToSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'HowTo',
+	name: pageTitle,
+	description: pageDescription,
+	totalTime: 'PT10M',
+	supply: [
+		{
+			'@type': 'HowToSupply',
+			name: 'Router y cable de corriente',
+		},
+	],
+	tool: [
+		{
+			'@type': 'HowToTool',
+			name: 'Telefono o laptop para probar conexion',
+		},
+	],
+	step: [
+		{
+			'@type': 'HowToStep',
+			name: 'Apaga el router',
+			text: 'Desconecta el router de la corriente.',
+		},
+		{
+			'@type': 'HowToStep',
+			name: 'Espera 30 segundos',
+			text: 'Deja que la memoria temporal se limpie.',
+		},
+		{
+			'@type': 'HowToStep',
+			name: 'Enciende de nuevo',
+			text: 'Conecta otra vez el cable y espera a que arranque por completo.',
+		},
+	],
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} schema={howToSchema}>
+	<main>
+		<h1>{pageTitle}</h1>
+		<p>Esta pagina es una plantilla de referencia para contenido con schema HowTo.</p>
+	</main>
+</Layout>

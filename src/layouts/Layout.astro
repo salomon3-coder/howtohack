@@ -1,12 +1,31 @@
+---
+import StructuredData from '../components/StructuredData.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const {
+	title = 'HowToHack | Hacks eticos para resolver problemas',
+	description = 'Guias practicas para resolver problemas comunes en hogar, empresa y software de forma etica.',
+	schema,
+} = Astro.props;
+---
+
 <!doctype html>
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro Basics</title>
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		<link rel="canonical" href={Astro.url.href} />
+		<StructuredData data={schema} />
 	</head>
 	<body>
 		<slot />
