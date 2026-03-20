@@ -31,10 +31,16 @@ const TOPICS = [
 ];
 
 function parseJsonFromText(text) {
+	const cleaned = text
+		.replace(/^```json\s*/i, "")
+		.replace(/^```\s*/i, "")
+		.replace(/```$/i, "")
+		.trim();
+
 	try {
-		return JSON.parse(text);
+		return JSON.parse(cleaned);
 	} catch {
-		const match = text.match(/\{[\s\S]*\}/);
+		const match = cleaned.match(/\{[\s\S]*\}/);
 		if (!match) {
 			throw new Error("No valid JSON block found in model response.");
 		}
@@ -100,33 +106,48 @@ Reglas:
 - Sin hacking ilegal.
 - Contenido practico, claro, accionable.
 - Evita promesas exageradas.
-- No inventes datos estadisticos.`;
+- No inventes datos estadisticos.
+- Responde SOLO JSON valido, sin markdown ni bloques de codigo.`;
 
-	const response = await fetch("https://api.anthropic.com/v1/messages", {
-		method: "POST",
-		headers: {
-			"x-api-key": apiKey,
-			"anthropic-version": "2023-06-01",
-			"content-type": "application/json",
-		},
-		body: JSON.stringify({
-			model: modelToUse,
-			max_tokens: 2400,
-			temperature: 0.6,
-			messages: [{ role: "user", content: prompt }],
-		}),
-	});
+	const maxAttempts = 3;
+	let lastError = null;
 
-	if (!response.ok) {
-		throw new Error(`Anthropic API error: ${response.status} ${await response.text()}`);
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		const response = await fetch("https://api.anthropic.com/v1/messages", {
+			method: "POST",
+			headers: {
+				"x-api-key": apiKey,
+				"anthropic-version": "2023-06-01",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({
+				model: modelToUse,
+				max_tokens: 2400,
+				temperature: 0.4,
+				messages: [{ role: "user", content: `${prompt}\nIntento: ${attempt}/${maxAttempts}` }],
+			}),
+		});
+
+		if (!response.ok) {
+			throw new Error(`Anthropic API error: ${response.status} ${await response.text()}`);
+		}
+
+		const data = await response.json();
+		const text = data?.content?.[0]?.text?.trim();
+		if (!text) {
+			lastError = new Error("Anthropic API returned empty content.");
+			continue;
+		}
+
+		try {
+			return parseJsonFromText(text);
+		} catch (error) {
+			lastError = error;
+			console.warn(`Invalid JSON from model on attempt ${attempt}/${maxAttempts}. Retrying...`);
+		}
 	}
 
-	const data = await response.json();
-	const text = data?.content?.[0]?.text?.trim();
-	if (!text) {
-		throw new Error("Anthropic API returned empty content.");
-	}
-	return parseJsonFromText(text);
+	throw lastError ?? new Error("Failed to parse model response as JSON after retries.");
 }
 
 async function resolveModel(apiKey) {
