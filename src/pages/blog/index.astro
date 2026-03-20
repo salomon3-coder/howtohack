@@ -23,7 +23,10 @@ const getReadingMinutes = (post) => {
 		<section class="hero hero-blog">
 			<p class="eyebrow">HowToHack Magazine</p>
 			<h1>Articulos recientes</h1>
-			<p class="muted">Selecciona una guia y sigue los pasos. Todo orientado a resultados practicos.</p>
+			<p class="muted">
+				Selecciona una guia y sigue los pasos. Todo orientado a resultados practicos y lectura
+				agradable desde movil o escritorio.
+			</p>
 		</section>
 		<div class="grid">
 			{
@@ -37,7 +40,7 @@ const getReadingMinutes = (post) => {
 						<h3>
 							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
 						</h3>
-						<p>{post.data.description}</p>
+						<p class="muted">{post.data.description}</p>
 						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Leer articulo</a></p>
 					</article>
 				))

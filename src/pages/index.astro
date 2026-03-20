@@ -25,12 +25,39 @@ const getReadingMinutes = (post) => {
 	<main>
 		<section class="hero">
 			<p class="eyebrow">HowToHack Magazine</p>
-			<h1>Resuelve problemas del dia a dia, sin complicarte</h1>
+			<h1>Un sitio que te explica todo facil, practico y sin humo</h1>
 			<p class="muted">
-				Guias claras y eticas para hogar, trabajo y software. Publicamos hacks practicos que
-				funcionan de verdad.
+				Guias claras y eticas para hogar, trabajo y software. Publicamos soluciones accionables
+				pensadas para personas reales, no para expertos.
 			</p>
-			<p><a class="btn" href="/blog/">Explorar articulos</a></p>
+			<div class="hero-actions">
+				<a class="btn" href="/blog/">Explorar articulos</a>
+				<a class="btn secondary" href="/blog/">Ver lo mas nuevo</a>
+			</div>
+		</section>
+
+		<section class="split">
+			<article class="panel">
+				<h3>Por que HowToHack funciona</h3>
+				<p class="muted">
+					Explicamos paso a paso, evitamos tecnicismos innecesarios y priorizamos acciones seguras
+					que puedas aplicar hoy.
+				</p>
+				<ul class="mini-list">
+					<li>Guias cortas, utiles y orientadas a resultados</li>
+					<li>Enfoque etico: resolver, optimizar, mejorar</li>
+					<li>Contenido actualizado y pensado para SEO real</li>
+				</ul>
+			</article>
+			<article class="panel">
+				<h3>Categorias principales</h3>
+				<ul class="mini-list">
+					<li><strong>Hogar:</strong> ahorro, mantenimiento y soluciones cotidianas</li>
+					<li><strong>Software:</strong> errores comunes, rendimiento y productividad</li>
+					<li><strong>Empresa:</strong> procesos, equipos y trabajo digital</li>
+					<li><strong>Online:</strong> seguridad, cuentas y herramientas web</li>
+				</ul>
+			</article>
 		</section>
 
 		{
@@ -65,6 +92,7 @@ const getReadingMinutes = (post) => {
 							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
 						</h3>
 						<p class="muted">{post.data.description}</p>
+						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Seguir leyendo</a></p>
 					</article>
 				))
 			}
