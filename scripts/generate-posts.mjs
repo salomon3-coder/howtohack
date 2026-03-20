@@ -64,26 +64,86 @@ function slugify(input) {
 }
 
 function buildFrontmatter(post) {
+	const safePost = normalizePost(post);
+
 	const lines = [
 		"---",
-		`title: "${post.title.replaceAll('"', '\\"')}"`,
-		`description: "${post.description.replaceAll('"', '\\"')}"`,
+		`title: "${safePost.title.replaceAll('"', '\\"')}"`,
+		`description: "${safePost.description.replaceAll('"', '\\"')}"`,
 		`pubDate: "${new Date().toISOString()}"`,
-		`category: "${post.category}"`,
+		`category: "${safePost.category}"`,
 		"tags:",
-		...post.tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`),
+		...safePost.tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`),
 		"faq:",
-		...post.faq.flatMap((item) => [
+		...safePost.faq.flatMap((item) => [
 			`  - question: "${item.question.replaceAll('"', '\\"')}"`,
 			`    answer: "${item.answer.replaceAll('"', '\\"')}"`,
 		]),
 		"howToSteps:",
-		...post.howToSteps.map((step) => `  - "${step.replaceAll('"', '\\"')}"`),
+		...safePost.howToSteps.map((step) => `  - "${step.replaceAll('"', '\\"')}"`),
 		"draft: false",
 		"---",
 		"",
 	];
 	return lines.join("\n");
+}
+
+function normalizePost(raw) {
+	const post = raw ?? {};
+
+	const title =
+		typeof post.title === "string" && post.title.trim() !== ""
+			? post.title.trim()
+			: "Guia practica para resolver un problema comun";
+
+	const description =
+		typeof post.description === "string" && post.description.trim() !== ""
+			? post.description.trim()
+			: "Guia paso a paso para resolver problemas cotidianos de forma etica y simple.";
+
+	const category =
+		typeof post.category === "string" && post.category.trim() !== ""
+			? post.category.trim()
+			: "Software";
+
+	const tags = Array.isArray(post.tags)
+		? post.tags.filter((item) => typeof item === "string" && item.trim() !== "")
+		: ["guia practica", "paso a paso"];
+
+	const faq = Array.isArray(post.faq)
+		? post.faq
+				.filter(
+					(item) =>
+						item &&
+						typeof item.question === "string" &&
+						typeof item.answer === "string" &&
+						item.question.trim() !== "" &&
+						item.answer.trim() !== "",
+				)
+				.map((item) => ({
+					question: item.question.trim(),
+					answer: item.answer.trim(),
+				}))
+		: [];
+
+	const howToSteps = Array.isArray(post.howToSteps)
+		? post.howToSteps.filter((item) => typeof item === "string" && item.trim() !== "")
+		: [];
+
+	const bodyMarkdown =
+		typeof post.bodyMarkdown === "string" && post.bodyMarkdown.trim() !== ""
+			? post.bodyMarkdown.trim()
+			: `## Introduccion
+
+Esta guia resume pasos practicos y eticos para resolver el problema.
+
+## Pasos sugeridos
+
+1. Define claramente el problema.
+2. Aplica una solucion simple y segura.
+3. Verifica resultados y documenta cambios.`;
+
+	return { title, description, category, tags, faq, howToSteps, bodyMarkdown };
 }
 
 async function callClaude(topic) {
@@ -195,8 +255,9 @@ async function ensureOutputDir() {
 }
 
 async function writePostFile(post) {
+	const safePost = normalizePost(post);
 	const datePart = new Date().toISOString().slice(0, 10);
-	const baseSlug = `${datePart}-${slugify(post.title)}`;
+	const baseSlug = `${datePart}-${slugify(safePost.title)}`;
 	let slug = baseSlug;
 	let filePath = path.join(OUTPUT_DIR, `${slug}.md`);
 	let attempt = 1;
@@ -207,7 +268,7 @@ async function writePostFile(post) {
 		filePath = path.join(OUTPUT_DIR, `${slug}.md`);
 	}
 
-	const content = `${buildFrontmatter(post)}${post.bodyMarkdown.trim()}\n`;
+	const content = `${buildFrontmatter(safePost)}${safePost.bodyMarkdown.trim()}\n`;
 	await fs.writeFile(filePath, content, "utf8");
 	return filePath;
 }
