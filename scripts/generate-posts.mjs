@@ -15,7 +15,7 @@ function resolvePostsPerRun(rawValue) {
 
 const POSTS_PER_RUN = resolvePostsPerRun(process.env.POSTS_PER_RUN);
 const OUTPUT_DIR = path.resolve("src/content/blog");
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
+const MODEL = process.env.ANTHROPIC_MODEL;
 
 const TOPICS = [
 	"acelerar laptop lenta en Windows",
@@ -80,6 +80,8 @@ async function callClaude(topic) {
 		throw new Error("Missing ANTHROPIC_API_KEY. Configure it in GitHub Actions secrets.");
 	}
 
+	const modelToUse = await resolveModel(apiKey);
+
 	const prompt = `Genera UN articulo util y etico en espanol para howtohack.net.
 Tema: ${topic}
 
@@ -108,7 +110,7 @@ Reglas:
 			"content-type": "application/json",
 		},
 		body: JSON.stringify({
-			model: MODEL,
+			model: modelToUse,
 			max_tokens: 2400,
 			temperature: 0.6,
 			messages: [{ role: "user", content: prompt }],
@@ -125,6 +127,40 @@ Reglas:
 		throw new Error("Anthropic API returned empty content.");
 	}
 	return parseJsonFromText(text);
+}
+
+async function resolveModel(apiKey) {
+	if (MODEL && MODEL.trim() !== "") {
+		return MODEL.trim();
+	}
+
+	const response = await fetch("https://api.anthropic.com/v1/models", {
+		method: "GET",
+		headers: {
+			"x-api-key": apiKey,
+			"anthropic-version": "2023-06-01",
+		},
+	});
+
+	if (!response.ok) {
+		throw new Error(
+			`Could not list Anthropic models (status ${response.status}). Set ANTHROPIC_MODEL explicitly in GitHub Variables.`,
+		);
+	}
+
+	const data = await response.json();
+	const models = Array.isArray(data?.data) ? data.data.map((m) => m.id).filter(Boolean) : [];
+	if (models.length === 0) {
+		throw new Error("No models available for this API key/workspace.");
+	}
+
+	const preferred =
+		models.find((id) => id.includes("sonnet")) ??
+		models.find((id) => id.includes("claude")) ??
+		models[0];
+
+	console.log(`Using Anthropic model: ${preferred}`);
+	return preferred;
 }
 
 async function ensureOutputDir() {
