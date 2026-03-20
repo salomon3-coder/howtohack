@@ -1,46 +1,43 @@
-# Astro Starter Kit: Basics
+# HowToHack
+
+Sitio en Astro con publicacion automatica de articulos para Cloudflare Pages.
+
+## Flujo automatico diario
+
+1. GitHub Action corre cada dia (o manualmente).
+2. Ejecuta `npm run generate:posts`.
+3. Crea articulos markdown en `src/content/blog/`.
+4. Hace commit/push automatico.
+5. Cloudflare Pages detecta el push y despliega.
+
+## Configuracion en GitHub
+
+En el repositorio `howtohack`:
+
+1. Ve a `Settings` -> `Secrets and variables` -> `Actions`.
+2. Crea secret:
+   - `ANTHROPIC_API_KEY` (tu API key real de Claude).
+3. (Opcional) Crea variables:
+   - `POSTS_PER_RUN` (ejemplo `10`).
+   - `ANTHROPIC_MODEL` (ejemplo `claude-3-5-sonnet-20241022`).
+4. Ve a `Actions` y habilita el workflow `Daily Content Generator`.
+
+## Ejecutar local
 
 ```sh
-npm create astro@latest -- --template basics
+npm install
+npm run generate:posts
+npm run build
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## Comandos utiles
 
-## 🚀 Project Structure
+- `npm run dev`: desarrollo local.
+- `npm run build`: build de produccion.
+- `npm run generate:posts`: genera articulos automaticamente.
 
-Inside of your Astro project, you'll see the following folders and files:
+## Notas de contenido
 
-```text
-/
-├── public/
-│   └── favicon.svg
-├── src
-│   ├── assets
-│   │   └── astro.svg
-│   ├── components
-│   │   └── Welcome.astro
-│   ├── layouts
-│   │   └── Layout.astro
-│   └── pages
-│       └── index.astro
-└── package.json
-```
-
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- El script incluye fallback local si falta `ANTHROPIC_API_KEY`.
+- Los articulos se publican como contenido etico y practico.
+- Para imagenes libres no-AI, puedes ampliar el script con una API de stock libre antes de publicar.

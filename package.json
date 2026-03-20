@@ -1,5 +1,5 @@
 {
-  "name": "growing-group",
+  "name": "howtohack",
   "type": "module",
   "version": "0.0.1",
   "engines": {
@@ -9,7 +9,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "generate:posts": "node scripts/generate-posts.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.1",

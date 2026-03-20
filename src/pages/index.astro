@@ -1,4 +1,10 @@
-import Layout from '../layouts/Layout.astro';
+---
+import { getCollection } from "astro:content";
+import Layout from "../layouts/Layout.astro";
+
+const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
+	.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
+	.slice(0, 10);
 ---
 
 <Layout
@@ -8,5 +14,16 @@ import Layout from '../layouts/Layout.astro';
 	<main>
 		<h1>HowToHack</h1>
 		<p>Guias practicas, faciles y eticas para resolver problemas reales.</p>
+		<p><a href="/blog/">Ver todos los articulos</a></p>
+		<h2>Ultimos publicados</h2>
+		<ul>
+			{
+				latestPosts.map((post) => (
+					<li>
+						<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
+					</li>
+				))
+			}
+		</ul>
 	</main>
 </Layout>

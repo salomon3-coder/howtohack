@@ -1,0 +1,85 @@
+---
+import { getCollection, render } from "astro:content";
+import Layout from "../../layouts/Layout.astro";
+
+export async function getStaticPaths() {
+	const posts = await getCollection("blog", ({ data }) => !data.draft);
+	return posts.map((post) => ({
+		params: { slug: (post.slug ?? post.id).replace(/\.md$/, "") },
+		props: { post },
+	}));
+}
+
+const { post } = Astro.props;
+const postSlug = (post.slug ?? post.id).replace(/\.md$/, "");
+const { Content } = await render(post);
+const postUrl = new URL(`/blog/${postSlug}/`, Astro.site ?? Astro.url.origin).toString();
+const imageUrl = post.data.image?.url;
+
+const articleSchema = {
+	"@context": "https://schema.org",
+	"@type": "Article",
+	headline: post.data.title,
+	description: post.data.description,
+	datePublished: post.data.pubDate.toISOString(),
+	dateModified: (post.data.updatedDate ?? post.data.pubDate).toISOString(),
+	mainEntityOfPage: postUrl,
+	image: imageUrl ? [imageUrl] : undefined,
+	author: { "@type": "Organization", name: "HowToHack" },
+	publisher: { "@type": "Organization", name: "HowToHack" },
+};
+
+const faqSchema =
+	post.data.faq.length > 0
+		? {
+				"@context": "https://schema.org",
+				"@type": "FAQPage",
+				mainEntity: post.data.faq.map((item) => ({
+					"@type": "Question",
+					name: item.question,
+					acceptedAnswer: {
+						"@type": "Answer",
+						text: item.answer,
+					},
+				})),
+			}
+		: null;
+
+const howToSchema =
+	post.data.howToSteps.length > 0
+		? {
+				"@context": "https://schema.org",
+				"@type": "HowTo",
+				name: post.data.title,
+				description: post.data.description,
+				step: post.data.howToSteps.map((step) => ({
+					"@type": "HowToStep",
+					text: step,
+				})),
+			}
+		: null;
+
+const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
+---
+
+<Layout title={post.data.title} description={post.data.description} schema={schema}>
+	<main>
+		<p><a href="/blog/">Volver al blog</a></p>
+		<h1>{post.data.title}</h1>
+		<p>{post.data.description}</p>
+		{
+			post.data.image && (
+				<figure>
+					<img src={post.data.image.url} alt={post.data.image.alt} loading="lazy" />
+					<figcaption>
+						Imagen: {post.data.image.license ?? "Licencia abierta"}{" "}
+						{post.data.image.source && <a href={post.data.image.source}>fuente</a>}
+					</figcaption>
+				</figure>
+			)
+		}
+		<article>
+			<Content />
+		</article>
+	</main>
+</Layout>
