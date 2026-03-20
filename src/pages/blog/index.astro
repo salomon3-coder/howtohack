@@ -5,6 +5,10 @@ import Layout from "../../layouts/Layout.astro";
 const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 	(a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
 );
+const PAGE_SIZE = 6;
+const currentPage = 1;
+const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
+const pagedPosts = posts.slice(0, PAGE_SIZE);
 
 const formatDate = (date) =>
 	new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
@@ -28,10 +32,19 @@ const getReadingMinutes = (post) => {
 				agradable desde movil o escritorio.
 			</p>
 		</section>
+		<input
+			class="search-bar"
+			id="blog-search"
+			type="search"
+			placeholder="Buscar por titulo, descripcion o categoria..."
+		/>
 		<div class="grid">
 			{
-				posts.map((post) => (
-					<article class="card">
+				pagedPosts.map((post) => (
+					<article
+						class="card"
+						data-search={`${post.data.title} ${post.data.description} ${post.data.category}`.toLowerCase()}
+					>
 						<p class="meta-line">
 							<span class="badge">{post.data.category}</span>
 							<span>{formatDate(post.data.pubDate)}</span>
@@ -46,5 +59,29 @@ const getReadingMinutes = (post) => {
 				))
 			}
 		</div>
+		<nav class="pagination" aria-label="Paginacion de articulos">
+			<a class={`page-pill ${currentPage === 1 ? "active" : ""}`} href="/blog/">
+				1
+			</a>
+			{
+				Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => i + 2).map((page) => (
+					<a class="page-pill" href={`/blog/page/${page}/`}>
+						{page}
+					</a>
+				))
+			}
+		</nav>
 	</main>
 </Layout>
+
+<script>
+	const searchInput = document.getElementById("blog-search");
+	const cards = Array.from(document.querySelectorAll(".card[data-search]"));
+	searchInput?.addEventListener("input", (event) => {
+		const value = (event.target.value || "").toLowerCase().trim();
+		cards.forEach((card) => {
+			const match = card.dataset.search?.includes(value);
+			card.style.display = match ? "" : "none";
+		});
+	});
+</script>

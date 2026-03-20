@@ -34,6 +34,9 @@ const {
 				<a class="brand" href="/">HowToHack</a>
 				<nav class="nav">
 					<a href="/blog/">Blog</a>
+					<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
+						<span class="theme-label">Modo oscuro</span>
+					</button>
 				</nav>
 			</div>
 		</header>
@@ -43,5 +46,26 @@ const {
 		<footer class="site-footer">
 			<div class="footer-wrap">HowToHack - guias eticas para resolver problemas reales.</div>
 		</footer>
+		<script>
+			const root = document.documentElement;
+			const storageKey = "howtohack-theme";
+			const btn = document.getElementById("theme-toggle");
+			const label = btn?.querySelector(".theme-label");
+			const apply = (theme) => {
+				root.dataset.theme = theme;
+				if (label) label.textContent = theme === "dark" ? "Modo claro" : "Modo oscuro";
+			};
+			const saved = localStorage.getItem(storageKey);
+			if (saved === "dark" || saved === "light") {
+				apply(saved);
+			} else {
+				apply(window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+			}
+			btn?.addEventListener("click", () => {
+				const next = root.dataset.theme === "dark" ? "light" : "dark";
+				apply(next);
+				localStorage.setItem(storageKey, next);
+			});
+		</script>
 	</body>
 </html>

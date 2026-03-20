@@ -1,0 +1,71 @@
+---
+import { getCollection } from "astro:content";
+import Layout from "../../../layouts/Layout.astro";
+
+const PAGE_SIZE = 6;
+
+const allPosts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
+	(a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime(),
+);
+const totalPages = Math.max(1, Math.ceil(allPosts.length / PAGE_SIZE));
+
+export async function getStaticPaths() {
+	const pageSize = 6;
+	const posts = await getCollection("blog", ({ data }) => !data.draft);
+	const total = Math.max(1, Math.ceil(posts.length / pageSize));
+	return Array.from({ length: Math.max(0, total - 1) }, (_, idx) => ({
+		params: { page: String(idx + 2) },
+	}));
+}
+
+const currentPage = Number.parseInt(Astro.params.page ?? "1", 10);
+const safePage = Number.isFinite(currentPage) && currentPage >= 1 ? currentPage : 1;
+const offset = (safePage - 1) * PAGE_SIZE;
+const posts = allPosts.slice(offset, offset + PAGE_SIZE);
+
+const formatDate = (date) =>
+	new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+const getReadingMinutes = (post) => {
+	const words = (post.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+	return Math.max(1, Math.ceil(words / 220));
+};
+---
+
+<Layout title={`Blog pagina ${safePage} | HowToHack`} description="Archivo paginado de articulos HowToHack.">
+	<main>
+		<section class="hero hero-blog">
+			<p class="eyebrow">HowToHack Magazine</p>
+			<h1>Articulos recientes - pagina {safePage}</h1>
+			<p class="muted">Navega por el archivo completo de publicaciones.</p>
+		</section>
+		<div class="grid">
+			{
+				posts.map((post) => (
+					<article class="card">
+						<p class="meta-line">
+							<span class="badge">{post.data.category}</span>
+							<span>{formatDate(post.data.pubDate)}</span>
+							<span>{getReadingMinutes(post)} min lectura</span>
+						</p>
+						<h3>
+							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
+						</h3>
+						<p class="muted">{post.data.description}</p>
+					</article>
+				))
+			}
+		</div>
+		<nav class="pagination" aria-label="Paginacion de articulos">
+			<a class={`page-pill ${safePage === 1 ? "active" : ""}`} href="/blog/">
+				1
+			</a>
+			{
+				Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => i + 2).map((page) => (
+					<a class={`page-pill ${safePage === page ? "active" : ""}`} href={`/blog/page/${page}/`}>
+						{page}
+					</a>
+				))
+			}
+		</nav>
+	</main>
+</Layout>
