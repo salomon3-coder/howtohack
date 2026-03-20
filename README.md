@@ -19,7 +19,7 @@ En el repositorio `howtohack`:
    - `ANTHROPIC_API_KEY` (tu API key real de Claude).
 3. (Opcional) Crea variables:
    - `POSTS_PER_RUN` (ejemplo `10`).
-   - `ANTHROPIC_MODEL` (ejemplo `claude-3-5-sonnet-20241022`).
+   - `ANTHROPIC_MODEL` (ejemplo `claude-3-5-sonnet-latest`).
 4. Ve a `Actions` y habilita el workflow `Daily Content Generator`.
 
 ## Ejecutar local

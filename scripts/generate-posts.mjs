@@ -15,7 +15,7 @@ function resolvePostsPerRun(rawValue) {
 
 const POSTS_PER_RUN = resolvePostsPerRun(process.env.POSTS_PER_RUN);
 const OUTPUT_DIR = path.resolve("src/content/blog");
-const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-20241022";
+const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-latest";
 
 const TOPICS = [
 	"acelerar laptop lenta en Windows",
