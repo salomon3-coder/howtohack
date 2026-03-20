@@ -1,41 +1,37 @@
 ---
-title: "Como resolver: reducir consumo electrico en el hogar"
-description: "Guia paso a paso para reducir consumo electrico en el hogar de forma simple y etica."
+title: "How to reduce electricity usage at home"
+description: "Simple, practical actions to lower energy consumption without losing comfort."
 pubDate: "2026-03-20T14:07:48.836Z"
-category: "Software"
+category: "Home"
 tags:
-  - "guia practica"
-  - "paso a paso"
-  - "solucion"
+  - "energy savings"
+  - "home efficiency"
+  - "utility bill"
 faq:
-  - question: "Cuanto tiempo toma aplicar esta solucion?"
-    answer: "En la mayoria de casos entre 10 y 30 minutos."
-  - question: "Necesito herramientas pagas?"
-    answer: "No, puedes empezar con opciones gratuitas."
+  - question: "How much can I save?"
+    answer: "Many households can reduce monthly consumption by 10% to 25% with consistent habits."
+  - question: "Do I need expensive devices?"
+    answer: "No. Start with behavior and settings changes before buying equipment."
 howToSteps:
-  - "Identifica el problema exacto y cuando ocurre."
-  - "Aplica una solucion simple y reversible primero."
-  - "Valida resultados con una prueba corta."
-  - "Documenta lo que funciono para repetirlo luego."
+  - "Identify your highest-consumption appliances."
+  - "Adjust usage schedules and thermostat settings."
+  - "Reduce standby consumption."
+  - "Track your bill for 1 to 2 months."
 draft: false
 ---
-## Que vas a lograr
+## What you will achieve
 
-Con esta guia vas a resolver **reducir consumo electrico en el hogar** con pasos simples y sin tecnicismos innecesarios.
+You will reduce unnecessary electricity usage and improve monthly cost control.
 
-## Paso a paso
+## Step-by-step
 
-1. Define el problema concreto y su impacto.
-2. Haz una prueba rapida con la solucion de menor riesgo.
-3. Ajusta configuraciones segun resultado.
-4. Verifica que el problema no vuelva durante 24 horas.
+1. Start with lighting, climate control, and water heating.
+2. Apply low-cost changes first.
+3. Measure before and after to confirm impact.
+4. Standardize what works for your household.
 
-## Errores comunes
+## Common mistakes
 
-- Cambiar demasiadas cosas al mismo tiempo.
-- No medir antes y despues.
-- No dejar registro de los cambios.
-
-## Conclusion
-
-Aplica mejoras pequenas, valida y estandariza el proceso para que sea repetible.
+- Making changes without measurement.
+- Ignoring standby power usage.
+- Stopping after the first week.

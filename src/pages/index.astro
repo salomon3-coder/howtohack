@@ -10,7 +10,7 @@ const featuredPost = latestPosts[0];
 const otherPosts = latestPosts.slice(1, 7);
 
 const formatDate = (date) =>
-	new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+	new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 
 const getReadingMinutes = (post) => {
 	const words = (post.body ?? "").trim().split(/\s+/).filter(Boolean).length;
@@ -19,43 +19,43 @@ const getReadingMinutes = (post) => {
 ---
 
 <Layout
-	title="HowToHack | Soluciones practicas paso a paso"
-	description="Hacks eticos y guias claras para resolver problemas de hogar, trabajo y software."
+	title="HowToHack | Practical step-by-step solutions"
+	description="Ethical hacks and easy guides for home, work, and software problems."
 >
 	<main>
 		<section class="hero">
 			<p class="eyebrow">HowToHack Magazine</p>
-			<h1>Un sitio que te explica todo facil, practico y sin humo</h1>
+			<h1>A no-fluff website that helps you fix things fast</h1>
 			<p class="muted">
-				Guias claras y eticas para hogar, trabajo y software. Publicamos soluciones accionables
-				pensadas para personas reales, no para expertos.
+				Clear and ethical guides for home, work, and software. We publish actionable solutions
+				built for real people, not just experts.
 			</p>
 			<div class="hero-actions">
-				<a class="btn" href="/blog/">Explorar articulos</a>
-				<a class="btn secondary" href="/blog/">Ver lo mas nuevo</a>
+				<a class="btn" href="/blog/">Explore articles</a>
+				<a class="btn secondary" href="/blog/">See latest posts</a>
 			</div>
 		</section>
 
 		<section class="split">
 			<article class="panel">
-				<h3>Por que HowToHack funciona</h3>
+				<h3>Why HowToHack works</h3>
 				<p class="muted">
-					Explicamos paso a paso, evitamos tecnicismos innecesarios y priorizamos acciones seguras
-					que puedas aplicar hoy.
+					We explain things step by step, avoid unnecessary jargon, and prioritize safe actions
+					you can apply today.
 				</p>
 				<ul class="mini-list">
-					<li>Guias cortas, utiles y orientadas a resultados</li>
-					<li>Enfoque etico: resolver, optimizar, mejorar</li>
-					<li>Contenido actualizado y pensado para SEO real</li>
+					<li>Short, practical, results-focused guides</li>
+					<li>Ethical approach: solve, optimize, improve</li>
+					<li>Fresh content designed for real SEO outcomes</li>
 				</ul>
 			</article>
 			<article class="panel">
-				<h3>Categorias principales</h3>
+				<h3>Main categories</h3>
 				<ul class="mini-list">
-					<li><strong>Hogar:</strong> ahorro, mantenimiento y soluciones cotidianas</li>
-					<li><strong>Software:</strong> errores comunes, rendimiento y productividad</li>
-					<li><strong>Empresa:</strong> procesos, equipos y trabajo digital</li>
-					<li><strong>Online:</strong> seguridad, cuentas y herramientas web</li>
+					<li><strong>Home:</strong> savings, maintenance, daily fixes</li>
+					<li><strong>Software:</strong> common errors, speed, productivity</li>
+					<li><strong>Business:</strong> processes, teamwork, digital workflows</li>
+					<li><strong>Online:</strong> security, accounts, web tools</li>
 				</ul>
 			</article>
 		</section>
@@ -66,7 +66,7 @@ const getReadingMinutes = (post) => {
 					<p class="meta-line">
 						<span class="badge">{featuredPost.data.category}</span>
 						<span>{formatDate(featuredPost.data.pubDate)}</span>
-						<span>{getReadingMinutes(featuredPost)} min lectura</span>
+						<span>{getReadingMinutes(featuredPost)} min read</span>
 					</p>
 					<h2>
 						<a href={`/blog/${(featuredPost.slug ?? featuredPost.id).replace(/\.md$/, "")}/`}>
@@ -78,7 +78,7 @@ const getReadingMinutes = (post) => {
 			)
 		}
 
-		<h2>Ultimos publicados</h2>
+		<h2>Latest published</h2>
 		<div class="grid">
 			{
 				otherPosts.map((post) => (
@@ -86,13 +86,13 @@ const getReadingMinutes = (post) => {
 						<p class="meta-line">
 							<span class="badge">{post.data.category}</span>
 							<span>{formatDate(post.data.pubDate)}</span>
-							<span>{getReadingMinutes(post)} min lectura</span>
+							<span>{getReadingMinutes(post)} min read</span>
 						</p>
 						<h3>
 							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
 						</h3>
 						<p class="muted">{post.data.description}</p>
-						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Seguir leyendo</a></p>
+						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Read article</a></p>
 					</article>
 				))
 			}

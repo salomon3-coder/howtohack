@@ -1,8 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const pageTitle = 'Como reiniciar un router en 5 pasos';
-const pageDescription = 'Tutorial breve para reiniciar un router sin perder configuracion.';
+const pageTitle = 'How to restart a router in 5 steps';
+const pageDescription = 'Quick tutorial to restart a router without losing configuration.';
 
 const howToSchema = {
 	'@context': 'https://schema.org',
@@ -13,30 +13,30 @@ const howToSchema = {
 	supply: [
 		{
 			'@type': 'HowToSupply',
-			name: 'Router y cable de corriente',
+			name: 'Router and power cable',
 		},
 	],
 	tool: [
 		{
 			'@type': 'HowToTool',
-			name: 'Telefono o laptop para probar conexion',
+			name: 'Phone or laptop to test connection',
 		},
 	],
 	step: [
 		{
 			'@type': 'HowToStep',
-			name: 'Apaga el router',
-			text: 'Desconecta el router de la corriente.',
+			name: 'Turn off the router',
+			text: 'Unplug the router from power.',
 		},
 		{
 			'@type': 'HowToStep',
-			name: 'Espera 30 segundos',
-			text: 'Deja que la memoria temporal se limpie.',
+			name: 'Wait 30 seconds',
+			text: 'Allow temporary memory to clear.',
 		},
 		{
 			'@type': 'HowToStep',
-			name: 'Enciende de nuevo',
-			text: 'Conecta otra vez el cable y espera a que arranque por completo.',
+			name: 'Turn it back on',
+			text: 'Plug it back in and wait until it fully boots.',
 		},
 	],
 };
@@ -45,6 +45,6 @@ const howToSchema = {
 <Layout title={pageTitle} description={pageDescription} schema={howToSchema}>
 	<main>
 		<h1>{pageTitle}</h1>
-		<p>Esta pagina es una plantilla de referencia para contenido con schema HowTo.</p>
+		<p>This page is a reference template for HowTo schema content.</p>
 	</main>
 </Layout>

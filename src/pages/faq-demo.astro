@@ -1,8 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 
-const pageTitle = 'FAQ: mejorar velocidad de internet en casa';
-const pageDescription = 'Preguntas y respuestas clave para optimizar tu red WiFi.';
+const pageTitle = 'FAQ: How to improve home internet speed';
+const pageDescription = 'Key questions and answers to optimize your home Wi-Fi network.';
 
 const faqSchema = {
 	'@context': 'https://schema.org',
@@ -10,18 +10,18 @@ const faqSchema = {
 	mainEntity: [
 		{
 			'@type': 'Question',
-			name: 'Donde ubicar el router para mejor senal?',
+			name: 'Where should I place my router for stronger signal?',
 			acceptedAnswer: {
 				'@type': 'Answer',
-				text: 'Ubicalo en una zona centrada y elevada, lejos de paredes gruesas y microondas.',
+				text: 'Place it in a central, elevated location away from thick walls and microwaves.',
 			},
 		},
 		{
 			'@type': 'Question',
-			name: 'Conviene usar banda 5GHz o 2.4GHz?',
+			name: 'Should I use 5GHz or 2.4GHz?',
 			acceptedAnswer: {
 				'@type': 'Answer',
-				text: '5GHz es mas rapida a corta distancia; 2.4GHz cubre mas area con menos velocidad.',
+				text: '5GHz is faster at short range; 2.4GHz has better coverage but lower speed.',
 			},
 		},
 	],
@@ -31,6 +31,6 @@ const faqSchema = {
 <Layout title={pageTitle} description={pageDescription} schema={faqSchema}>
 	<main>
 		<h1>{pageTitle}</h1>
-		<p>Esta pagina es una plantilla de referencia para contenido con schema FAQPage.</p>
+		<p>This page is a reference template for FAQPage schema content.</p>
 	</main>
 </Layout>

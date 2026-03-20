@@ -9,14 +9,14 @@ interface Props {
 }
 
 const {
-	title = 'HowToHack | Hacks eticos para resolver problemas',
-	description = 'Guias practicas para resolver problemas comunes en hogar, empresa y software de forma etica.',
+	title = 'HowToHack | Ethical practical guides',
+	description = 'Practical guides to solve common home, business, and software problems the easy way.',
 	schema,
 } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
@@ -34,8 +34,8 @@ const {
 				<a class="brand" href="/">HowToHack</a>
 				<nav class="nav">
 					<a href="/blog/">Blog</a>
-					<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Cambiar tema">
-						<span class="theme-label">Modo oscuro</span>
+					<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
+						<span class="theme-label">Dark mode</span>
 					</button>
 				</nav>
 			</div>
@@ -44,7 +44,7 @@ const {
 			<slot />
 		</div>
 		<footer class="site-footer">
-			<div class="footer-wrap">HowToHack - guias eticas para resolver problemas reales.</div>
+			<div class="footer-wrap">HowToHack - ethical guides for solving real-world problems.</div>
 		</footer>
 		<script>
 			const root = document.documentElement;
@@ -53,7 +53,7 @@ const {
 			const label = btn?.querySelector(".theme-label");
 			const apply = (theme) => {
 				root.dataset.theme = theme;
-				if (label) label.textContent = theme === "dark" ? "Modo claro" : "Modo oscuro";
+				if (label) label.textContent = theme === "dark" ? "Light mode" : "Dark mode";
 			};
 			const saved = localStorage.getItem(storageKey);
 			if (saved === "dark" || saved === "light") {

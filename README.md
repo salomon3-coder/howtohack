@@ -1,28 +1,28 @@
 # HowToHack
 
-Sitio en Astro con publicacion automatica de articulos para Cloudflare Pages.
+Astro site with fully automated article publishing for Cloudflare Pages.
 
-## Flujo automatico diario
+## Daily automated flow
 
-1. GitHub Action corre cada dia (o manualmente).
-2. Ejecuta `npm run generate:posts`.
-3. Crea articulos markdown en `src/content/blog/`.
-4. Hace commit/push automatico.
-5. Cloudflare Pages detecta el push y despliega.
+1. GitHub Action runs daily (or manually).
+2. It executes `npm run generate:posts`.
+3. It creates markdown articles in `src/content/blog/`.
+4. It commits and pushes automatically.
+5. Cloudflare Pages detects the push and deploys.
 
-## Configuracion en GitHub
+## GitHub configuration
 
-En el repositorio `howtohack`:
+In the `howtohack` repository:
 
-1. Ve a `Settings` -> `Secrets and variables` -> `Actions`.
-2. Crea secret:
-   - `ANTHROPIC_API_KEY` (tu API key real de Claude).
-3. (Opcional) Crea variables:
-   - `POSTS_PER_RUN` (ejemplo `10`).
-   - `ANTHROPIC_MODEL` (opcional; si lo dejas vacio, el script detecta uno disponible).
-4. Ve a `Actions` y habilita el workflow `Daily Content Generator`.
+1. Go to `Settings` -> `Secrets and variables` -> `Actions`.
+2. Create a secret:
+   - `ANTHROPIC_API_KEY` (your real Claude API key).
+3. (Optional) Create variables:
+   - `POSTS_PER_RUN` (example: `10`).
+   - `ANTHROPIC_MODEL` (optional; if empty, the script auto-detects an available model).
+4. Go to `Actions` and enable the `Daily Content Generator` workflow.
 
-## Ejecutar local
+## Run locally
 
 ```sh
 npm install
@@ -30,14 +30,14 @@ npm run generate:posts
 npm run build
 ```
 
-## Comandos utiles
+## Useful commands
 
-- `npm run dev`: desarrollo local.
-- `npm run build`: build de produccion.
-- `npm run generate:posts`: genera articulos automaticamente.
+- `npm run dev`: local development.
+- `npm run build`: production build.
+- `npm run generate:posts`: generate articles automatically.
 
-## Notas de contenido
+## Content notes
 
-- El script es estricto: sin `ANTHROPIC_API_KEY` el workflow falla.
-- Los articulos se publican como contenido etico y practico.
-- Para imagenes libres no-AI, puedes ampliar el script con una API de stock libre antes de publicar.
+- The script is strict: without `ANTHROPIC_API_KEY`, the workflow fails.
+- Articles are generated as practical, ethical content.
+- For free non-AI images, you can extend the script with a free stock image API before publishing.

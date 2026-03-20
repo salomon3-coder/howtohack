@@ -1,32 +1,32 @@
 ---
-title: "Cómo mejorar la seguridad básica de tus cuentas online paso a paso"
-description: "Aprende a proteger tus cuentas online con medidas prácticas y sencillas: contraseñas seguras, 2FA y más."
+title: "How to improve basic security for your online accounts"
+description: "Learn practical account security steps: strong passwords, 2FA, and safer recovery settings."
 pubDate: "2026-03-20T18:01:18.450Z"
 category: "Online"
 tags:
-  - "seguridad online"
-  - "contraseñas seguras"
-  - "autenticación en dos pasos"
-  - "protección de cuentas"
-  - "ciberseguridad básica"
+  - "online security"
+  - "strong passwords"
+  - "two-factor authentication"
+  - "account protection"
+  - "basic cybersecurity"
 faq:
-  - question: "¿Con qué frecuencia debo cambiar mis contraseñas?"
-    answer: "No es necesario cambiarlas con frecuencia fija si ya son seguras y únicas. Cámbiala inmediatamente si sospechas que ha sido comprometida o si el servicio sufre una brecha de seguridad."
-  - question: "¿Es seguro usar un gestor de contraseñas?"
-    answer: "Sí. Los gestores de contraseñas reconocidos como Bitwarden, 1Password o KeePass cifran tus datos localmente o en la nube con estándares robustos. Son mucho más seguros que reutilizar contraseñas simples."
-  - question: "¿Qué hago si creo que mi cuenta ha sido hackeada?"
-    answer: "Cambia la contraseña de inmediato, activa la autenticación en dos pasos, revisa los dispositivos conectados y notifica al soporte del servicio afectado."
-  - question: "¿El doble factor de autenticación por SMS es suficiente?"
-    answer: "Es mejor que no tener nada, pero el SMS puede ser vulnerable a ataques de SIM swapping. Siempre que puedas, usa una app de autenticación como Google Authenticator o Aegis."
+  - question: "How often should I change my passwords?"
+    answer: "If passwords are strong and unique, you do not need fixed rotation. Change immediately after suspicious activity or a breach."
+  - question: "Is a password manager safe?"
+    answer: "Yes. Trusted managers use strong encryption and are safer than reusing weak passwords."
+  - question: "What should I do if I suspect my account was compromised?"
+    answer: "Reset password, enable 2FA, revoke unknown sessions, and contact platform support."
+  - question: "Is SMS-based 2FA enough?"
+    answer: "It is better than nothing, but authenticator apps are usually stronger than SMS."
 howToSteps: []
 draft: false
 ---
-## Introduccion
+## Introduction
 
-Esta guia resume pasos practicos y eticos para resolver el problema.
+This guide summarizes practical and ethical actions to improve account security.
 
-## Pasos sugeridos
+## Suggested steps
 
-1. Define claramente el problema.
-2. Aplica una solucion simple y segura.
-3. Verifica resultados y documenta cambios.
+1. Start with your most important accounts.
+2. Enable 2FA and update weak recovery options.
+3. Monitor login alerts and document changes.

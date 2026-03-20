@@ -16,7 +16,7 @@ const { Content, headings } = await render(post);
 const postUrl = new URL(`/blog/${postSlug}/`, Astro.site ?? Astro.url.origin).toString();
 const imageUrl = post.data.image?.url;
 const readingMinutes = Math.max(1, Math.ceil((post.body ?? "").trim().split(/\s+/).filter(Boolean).length / 220));
-const formattedDate = new Intl.DateTimeFormat("es-CL", {
+const formattedDate = new Intl.DateTimeFormat("en-US", {
 	day: "2-digit",
 	month: "short",
 	year: "numeric",
@@ -74,7 +74,7 @@ const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
 			{
 				headings.length > 0 && (
 					<aside class="toc">
-						<h3>En este articulo</h3>
+						<h3>In this article</h3>
 						<ul>
 							{headings.map((heading) => <li><a href={`#${heading.slug}`}>{heading.text}</a></li>)}
 						</ul>
@@ -82,11 +82,11 @@ const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
 				)
 			}
 			<article class="post">
-				<p><a href="/blog/">Volver al blog</a></p>
+				<p><a href="/blog/">Back to blog</a></p>
 				<p class="meta-line">
 					<span class="badge">{post.data.category}</span>
 					<span>{formattedDate}</span>
-					<span>{readingMinutes} min lectura</span>
+					<span>{readingMinutes} min read</span>
 				</p>
 				<h1>{post.data.title}</h1>
 				<p class="muted">{post.data.description}</p>
@@ -95,8 +95,8 @@ const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
 						<figure>
 							<img src={post.data.image.url} alt={post.data.image.alt} loading="lazy" />
 							<figcaption>
-								Imagen: {post.data.image.license ?? "Licencia abierta"}{" "}
-								{post.data.image.source && <a href={post.data.image.source}>fuente</a>}
+								Image: {post.data.image.license ?? "Open license"}{" "}
+								{post.data.image.source && <a href={post.data.image.source}>source</a>}
 							</figcaption>
 						</figure>
 					)

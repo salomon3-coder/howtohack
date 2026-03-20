@@ -19,16 +19,16 @@ const OUTPUT_DIR = path.resolve("src/content/blog");
 const MODEL = process.env.ANTHROPIC_MODEL;
 
 const TOPICS = [
-	"acelerar laptop lenta en Windows",
-	"reducir consumo electrico en el hogar",
-	"mejorar velocidad del wifi sin cambiar de plan",
-	"organizar correos en Gmail para trabajo",
-	"solucionar errores comunes de impresora",
-	"crear copias de seguridad automaticas",
-	"optimizar reuniones online para empresas",
-	"ahorrar tiempo con atajos de teclado",
-	"eliminar archivos temporales de forma segura",
-	"mejorar seguridad basica de cuentas online",
+	"speed up a slow Windows laptop",
+	"reduce household electricity usage",
+	"improve Wi-Fi speed without upgrading your plan",
+	"organize Gmail for better work productivity",
+	"fix common printer connection problems",
+	"set up automatic backups for personal files",
+	"run more effective online meetings for teams",
+	"save time with practical keyboard shortcuts",
+	"remove temporary files safely",
+	"improve basic online account security",
 ];
 
 function parseJsonFromText(text) {
@@ -97,12 +97,12 @@ function normalizePost(raw) {
 	const title =
 		typeof post.title === "string" && post.title.trim() !== ""
 			? post.title.trim()
-			: "Guia practica para resolver un problema comun";
+			: "Practical guide to solve a common problem";
 
 	const description =
 		typeof post.description === "string" && post.description.trim() !== ""
 			? post.description.trim()
-			: "Guia paso a paso para resolver problemas cotidianos de forma etica y simple.";
+			: "Step-by-step guide to solve everyday problems in a simple and ethical way.";
 
 	const category =
 		typeof post.category === "string" && post.category.trim() !== ""
@@ -111,7 +111,7 @@ function normalizePost(raw) {
 
 	const tags = Array.isArray(post.tags)
 		? post.tags.filter((item) => typeof item === "string" && item.trim() !== "")
-		: ["guia practica", "paso a paso"];
+		: ["practical guide", "step by step"];
 
 	const faq = Array.isArray(post.faq)
 		? post.faq
@@ -136,15 +136,15 @@ function normalizePost(raw) {
 	const bodyMarkdown =
 		typeof post.bodyMarkdown === "string" && post.bodyMarkdown.trim() !== ""
 			? post.bodyMarkdown.trim()
-			: `## Introduccion
+			: `## Introduction
 
-Esta guia resume pasos practicos y eticos para resolver el problema.
+This guide summarizes practical and ethical steps to solve the problem.
 
-## Pasos sugeridos
+## Suggested steps
 
-1. Define claramente el problema.
-2. Aplica una solucion simple y segura.
-3. Verifica resultados y documenta cambios.`;
+1. Clearly define the problem.
+2. Apply a simple and safe solution first.
+3. Verify results and document the changes.`;
 
 	return { title, description, category, tags, faq, howToSteps, bodyMarkdown };
 }
@@ -157,26 +157,26 @@ async function callClaude(topic) {
 
 	const modelToUse = await resolveModel(apiKey);
 
-	const prompt = `Genera UN articulo util y etico en espanol para howtohack.net.
-Tema: ${topic}
+	const prompt = `Generate ONE useful and ethical English article for howtohack.net.
+Topic: ${topic}
 
-Devuelve solo JSON valido con esta forma:
+Return only valid JSON with this structure:
 {
   "title": "string",
-  "description": "string (max 155 chars)",
-  "category": "Hogar|Empresa|Software|Online",
+  "description": "string (max 155 characters)",
+  "category": "Home|Business|Software|Online",
   "tags": ["...","...","..."],
   "faq": [{"question":"...","answer":"..."},{"question":"...","answer":"..."}],
   "howToSteps": ["...","...","...","..."],
-  "bodyMarkdown": "markdown completo con H2/H3 y pasos accionables"
+  "bodyMarkdown": "full markdown with H2/H3 and actionable steps"
 }
 
-Reglas:
-- Sin hacking ilegal.
-- Contenido practico, claro, accionable.
-- Evita promesas exageradas.
-- No inventes datos estadisticos.
-- Responde SOLO JSON valido, sin markdown ni bloques de codigo.`;
+Rules:
+- No illegal hacking or harmful instructions.
+- Keep content practical, clear, and actionable.
+- Avoid exaggerated promises.
+- Do not invent statistics.
+- Respond with valid JSON only (no markdown fences or extra text).`;
 
 	const maxAttempts = 3;
 	let lastError = null;
@@ -193,7 +193,7 @@ Reglas:
 				model: modelToUse,
 				max_tokens: 2400,
 				temperature: 0.4,
-				messages: [{ role: "user", content: `${prompt}\nIntento: ${attempt}/${maxAttempts}` }],
+				messages: [{ role: "user", content: `${prompt}\nAttempt: ${attempt}/${maxAttempts}` }],
 			}),
 		});
 

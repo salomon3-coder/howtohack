@@ -11,7 +11,7 @@ const totalPages = Math.max(1, Math.ceil(posts.length / PAGE_SIZE));
 const pagedPosts = posts.slice(0, PAGE_SIZE);
 
 const formatDate = (date) =>
-	new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+	new Intl.DateTimeFormat("en-US", { day: "2-digit", month: "short", year: "numeric" }).format(date);
 
 const getReadingMinutes = (post) => {
 	const words = (post.body ?? "").trim().split(/\s+/).filter(Boolean).length;
@@ -21,22 +21,22 @@ const getReadingMinutes = (post) => {
 
 <Layout
 	title="Blog | HowToHack"
-	description="Hacks eticos diarios para resolver problemas comunes paso a paso."
+	description="Daily ethical hacks to solve common problems step by step."
 >
 	<main>
 		<section class="hero hero-blog">
 			<p class="eyebrow">HowToHack Magazine</p>
-			<h1>Articulos recientes</h1>
+			<h1>Latest articles</h1>
 			<p class="muted">
-				Selecciona una guia y sigue los pasos. Todo orientado a resultados practicos y lectura
-				agradable desde movil o escritorio.
+				Pick a guide and follow each step. Everything is built for practical results and smooth
+				reading on mobile and desktop.
 			</p>
 		</section>
 		<input
 			class="search-bar"
 			id="blog-search"
 			type="search"
-			placeholder="Buscar por titulo, descripcion o categoria..."
+			placeholder="Search by title, description, or category..."
 		/>
 		<div class="grid">
 			{
@@ -48,18 +48,18 @@ const getReadingMinutes = (post) => {
 						<p class="meta-line">
 							<span class="badge">{post.data.category}</span>
 							<span>{formatDate(post.data.pubDate)}</span>
-							<span>{getReadingMinutes(post)} min lectura</span>
+							<span>{getReadingMinutes(post)} min read</span>
 						</p>
 						<h3>
 							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
 						</h3>
 						<p class="muted">{post.data.description}</p>
-						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Leer articulo</a></p>
+						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Read article</a></p>
 					</article>
 				))
 			}
 		</div>
-		<nav class="pagination" aria-label="Paginacion de articulos">
+		<nav class="pagination" aria-label="Article pagination">
 			<a class={`page-pill ${currentPage === 1 ? "active" : ""}`} href="/blog/">
 				1
 			</a>
