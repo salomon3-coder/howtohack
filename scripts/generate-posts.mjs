@@ -18,6 +18,9 @@ const POSTS_PER_RUN = resolvePostsPerRun(process.env.POSTS_PER_RUN);
 const OUTPUT_DIR = path.resolve("src/content/blog");
 const MODEL = process.env.ANTHROPIC_MODEL;
 const MIN_WORDS = 1200;
+/** Single JSON with 1200+ word body needs far more than 2.4k output tokens; use two-step generation. */
+const MAX_TOKENS_META = 4096;
+const MAX_TOKENS_BODY = 16384;
 
 const TOPICS = [
 	"speed up a slow Windows laptop",
@@ -139,14 +142,28 @@ function normalizePost(raw) {
 		? post.howToSteps.filter((item) => typeof item === "string" && item.trim() !== "")
 		: [];
 
-	const bodyMarkdown =
-		typeof post.bodyMarkdown === "string" && post.bodyMarkdown.trim() !== ""
-			? post.bodyMarkdown.trim()
-			: "";
+	const bodyMarkdown = extractBodyMarkdown(post);
 
 	const image = normalizeImage(post.image, title);
 
 	return { title, description, category, image, tags, faq, howToSteps, bodyMarkdown };
+}
+
+/** Accept common alternate keys from models that omit bodyMarkdown. */
+function extractBodyMarkdown(post) {
+	if (!post || typeof post !== "object") return "";
+	const candidates = [
+		post.bodyMarkdown,
+		post.body_markdown,
+		post.markdown,
+		post.content,
+		post.article,
+		post.body,
+	];
+	for (const value of candidates) {
+		if (typeof value === "string" && value.trim() !== "") return value.trim();
+	}
+	return "";
 }
 
 function countWords(text) {
@@ -162,6 +179,38 @@ function hasRequiredSections(markdown) {
 		/##\s+Internal Links/i,
 	];
 	return required.every((pattern) => pattern.test(markdown));
+}
+
+/** Remove accidental ``` / ```markdown wrappers from plain-text body responses. */
+function stripMarkdownFences(text) {
+	if (typeof text !== "string") return "";
+	let t = text.trim();
+	const fence = /^```(?:markdown|md)?\s*\n?([\s\S]*?)\n?```$/i;
+	const m = t.match(fence);
+	if (m) return m[1].trim();
+	return t;
+}
+
+/** Validate metadata JSON only (used before body generation). */
+function validatePostMeta(metaParsed) {
+	const issues = [];
+	if (!metaParsed || typeof metaParsed !== "object") {
+		return ["invalid metadata object"];
+	}
+	if (typeof metaParsed.title !== "string" || !metaParsed.title.trim()) {
+		issues.push("missing title");
+	}
+	const post = normalizePost({ ...metaParsed, bodyMarkdown: "" });
+	if (post.tags.length < 3) issues.push("need at least 3 tags");
+	if (post.faq.length < 3) issues.push("need at least 3 FAQ entries");
+	if (post.howToSteps.length < 3) issues.push("need at least 3 howToSteps");
+	if (!post.image?.url || !/^https?:\/\//i.test(post.image.url)) {
+		issues.push("image.url must be a valid http(s) URL");
+	}
+	if (post.description.length > 200) {
+		issues.push("description too long (keep under ~155 chars for SEO)");
+	}
+	return issues;
 }
 
 function validatePostQuality(rawPost) {
@@ -211,6 +260,35 @@ function normalizeImage(rawImage, title) {
 	return { url, alt, license, source };
 }
 
+async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens) {
+	const response = await fetch("https://api.anthropic.com/v1/messages", {
+		method: "POST",
+		headers: {
+			"x-api-key": apiKey,
+			"anthropic-version": "2023-06-01",
+			"content-type": "application/json",
+		},
+		body: JSON.stringify({
+			model: modelToUse,
+			max_tokens: maxTokens,
+			temperature: 0.4,
+			messages: [{ role: "user", content: userContent }],
+		}),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Anthropic API error: ${response.status} ${await response.text()}`);
+	}
+
+	const data = await response.json();
+	const text = data?.content?.[0]?.text?.trim();
+	const stopReason = data?.stop_reason;
+	return { text, stopReason };
+}
+
+/**
+ * Two-step generation: metadata JSON (small) + long body as plain markdown (avoids truncation).
+ */
 async function callClaude(topic) {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
 	if (!apiKey) {
@@ -219,70 +297,100 @@ async function callClaude(topic) {
 
 	const modelToUse = await resolveModel(apiKey);
 
-	const prompt = `Generate ONE useful and ethical English article for howtohack.net.
+	const metaPrompt = `Generate metadata for ONE useful and ethical English article for howtohack.net.
 Topic: ${topic}
 
-Return only valid JSON with this structure:
+Return only valid JSON (no markdown fences) with this structure. Do NOT include bodyMarkdown.
 {
   "title": "string",
   "description": "string (max 155 characters)",
   "category": "Home|Business|Software|Online",
   "image": {
-    "url": "string (free stock photo URL, non-AI)",
+    "url": "string (direct link to a free non-AI stock photo)",
     "alt": "string",
     "license": "string",
-    "source": "string"
+    "source": "string (page URL on Unsplash/Pexels/Pixabay/Wikimedia)"
   },
-  "tags": ["...","...","..."],
-  "faq": [{"question":"...","answer":"..."},{"question":"...","answer":"..."}],
-  "howToSteps": ["...","...","...","..."],
-  "bodyMarkdown": "full markdown, 1200-2000 words, with required H2 sections: Quick Answer, Pro Tip, FAQ, Conclusion, Internal Links"
+  "tags": ["tag1","tag2","tag3"],
+  "faq": [{"question":"...","answer":"..."}, ... at least 3],
+  "howToSteps": ["step1","step2","step3","step4"]
 }
 
-Rules:
-- No illegal hacking or harmful instructions.
-- Keep content practical, clear, and actionable.
-- Avoid exaggerated promises.
-- Do not invent statistics.
-- English only.
-- Follow this article flow: intro, quick answer box, body sections, pro tip box, FAQ, conclusion, internal link suggestions.
-- Include at least one comparison table when the topic has multiple options.
-- Image must be from free non-AI stock sources (Unsplash/Pexels/Pixabay/Wikimedia).
-- Respond with valid JSON only (no markdown fences or extra text).`;
+Rules: English only; no illegal hacking; image must be real stock photo URL; at least 3 tags and 3 FAQ items.`;
+
+	const bodyInstructions = `Write the FULL article body in Markdown only (no JSON, no code fences).
+
+Requirements:
+- English only, practical and ethical.
+- Length: at least ${MIN_WORDS} words.
+- Required H2 headings (exact titles): Quick Answer, Pro Tip, FAQ, Conclusion, Internal Links
+- Before Quick Answer: a short intro (2-3 paragraphs max).
+- Quick Answer: bullet list TL;DR (3-5 bullets).
+- Use more H2/H3 sections for the main content; mirror "People also ask" style questions where natural.
+- Include at least one markdown table if the topic compares options.
+- FAQ section: reuse the same questions/answers as in frontmatter is OK but expand slightly if needed.
+- Internal Links: list 2-3 related article titles as bullet links using placeholder paths like /blog/related-topic/
+- No illegal hacking or harmful instructions. Do not invent statistics.`;
 
 	const maxAttempts = 3;
 	let lastError = null;
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-		const response = await fetch("https://api.anthropic.com/v1/messages", {
-			method: "POST",
-			headers: {
-				"x-api-key": apiKey,
-				"anthropic-version": "2023-06-01",
-				"content-type": "application/json",
-			},
-			body: JSON.stringify({
-				model: modelToUse,
-				max_tokens: 2400,
-				temperature: 0.4,
-				messages: [{ role: "user", content: `${prompt}\nAttempt: ${attempt}/${maxAttempts}` }],
-			}),
-		});
-
-		if (!response.ok) {
-			throw new Error(`Anthropic API error: ${response.status} ${await response.text()}`);
-		}
-
-		const data = await response.json();
-		const text = data?.content?.[0]?.text?.trim();
-		if (!text) {
-			lastError = new Error("Anthropic API returned empty content.");
-			continue;
-		}
-
 		try {
-			const parsed = parseJsonFromText(text);
-			const { post, issues } = validatePostQuality(parsed);
+			const { text: metaText, stopReason: metaStop } = await anthropicMessage(
+				apiKey,
+				modelToUse,
+				`${metaPrompt}\nAttempt: ${attempt}/${maxAttempts}`,
+				MAX_TOKENS_META,
+			);
+			if (!metaText) {
+				lastError = new Error("Empty metadata response.");
+				continue;
+			}
+			if (metaStop === "max_tokens") {
+				console.warn("Metadata response hit max_tokens; retrying...");
+				lastError = new Error("Metadata truncated (max_tokens).");
+				continue;
+			}
+
+			const metaParsed = parseJsonFromText(metaText);
+			const metaIssues = validatePostMeta(metaParsed);
+			if (metaIssues.length > 0) {
+				lastError = new Error(`Metadata invalid: ${metaIssues.join("; ")}`);
+				console.warn(`Metadata quality fail attempt ${attempt}/${maxAttempts}: ${metaIssues.join("; ")}`);
+				continue;
+			}
+
+			const metaPost = normalizePost({ ...metaParsed, bodyMarkdown: "" });
+
+			const bodyUser = `${bodyInstructions}
+
+Topic: ${topic}
+Title: ${metaPost.title}
+Description: ${metaPost.description}
+Category: ${metaPost.category}
+
+Write the article now.`;
+
+			const { text: bodyText, stopReason: bodyStop } = await anthropicMessage(
+				apiKey,
+				modelToUse,
+				bodyUser,
+				MAX_TOKENS_BODY,
+			);
+			if (!bodyText) {
+				lastError = new Error("Empty body response.");
+				continue;
+			}
+			if (bodyStop === "max_tokens") {
+				lastError = new Error("Body truncated (max_tokens); increase MAX_TOKENS_BODY or shorten prompt.");
+				console.warn(`Body hit max_tokens on attempt ${attempt}/${maxAttempts}`);
+				continue;
+			}
+
+			const bodyClean = stripMarkdownFences(bodyText);
+			const merged = { ...metaParsed, bodyMarkdown: bodyClean };
+			const { post, issues } = validatePostQuality(merged);
 			if (issues.length > 0) {
 				lastError = new Error(`Low-quality output: ${issues.join("; ")}`);
 				console.warn(
@@ -293,11 +401,11 @@ Rules:
 			return post;
 		} catch (error) {
 			lastError = error;
-			console.warn(`Invalid JSON from model on attempt ${attempt}/${maxAttempts}. Retrying...`);
+			console.warn(`Attempt ${attempt}/${maxAttempts} error: ${error.message}`);
 		}
 	}
 
-	throw lastError ?? new Error("Failed to parse model response as JSON after retries.");
+	throw lastError ?? new Error("Failed to generate article after retries.");
 }
 
 async function resolveModel(apiKey) {
