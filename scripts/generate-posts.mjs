@@ -78,6 +78,11 @@ function buildFrontmatter(post) {
 		`description: "${safePost.description.replaceAll('"', '\\"')}"`,
 		`pubDate: "${new Date().toISOString()}"`,
 		`category: "${safePost.category}"`,
+		"image:",
+		`  url: "${safePost.image.url.replaceAll('"', '\\"')}"`,
+		`  alt: "${safePost.image.alt.replaceAll('"', '\\"')}"`,
+		`  license: "${safePost.image.license.replaceAll('"', '\\"')}"`,
+		`  source: "${safePost.image.source.replaceAll('"', '\\"')}"`,
 		safePost.tags.length > 0 ? "tags:" : "tags: []",
 		...tagsLines,
 		safePost.faq.length > 0 ? "faq:" : "faq: []",
@@ -146,7 +151,34 @@ This guide summarizes practical and ethical steps to solve the problem.
 2. Apply a simple and safe solution first.
 3. Verify results and document the changes.`;
 
-	return { title, description, category, tags, faq, howToSteps, bodyMarkdown };
+	const image = normalizeImage(post.image, title);
+
+	return { title, description, category, image, tags, faq, howToSteps, bodyMarkdown };
+}
+
+function normalizeImage(rawImage, title) {
+	const defaultQuery = encodeURIComponent(title.toLowerCase().replace(/[^a-z0-9\s-]/gi, " ").trim());
+	const fallback = {
+		url: `https://source.unsplash.com/1600x900/?${defaultQuery}`,
+		alt: `${title} illustration`,
+		license: "Unsplash license",
+		source: `https://unsplash.com/s/photos/${defaultQuery}`,
+	};
+
+	if (!rawImage || typeof rawImage !== "object") {
+		return fallback;
+	}
+
+	const url = typeof rawImage.url === "string" && rawImage.url.trim() ? rawImage.url.trim() : fallback.url;
+	const alt = typeof rawImage.alt === "string" && rawImage.alt.trim() ? rawImage.alt.trim() : fallback.alt;
+	const license =
+		typeof rawImage.license === "string" && rawImage.license.trim()
+			? rawImage.license.trim()
+			: fallback.license;
+	const source =
+		typeof rawImage.source === "string" && rawImage.source.trim() ? rawImage.source.trim() : fallback.source;
+
+	return { url, alt, license, source };
 }
 
 async function callClaude(topic) {
@@ -165,10 +197,16 @@ Return only valid JSON with this structure:
   "title": "string",
   "description": "string (max 155 characters)",
   "category": "Home|Business|Software|Online",
+  "image": {
+    "url": "string (free stock photo URL, non-AI)",
+    "alt": "string",
+    "license": "string",
+    "source": "string"
+  },
   "tags": ["...","...","..."],
   "faq": [{"question":"...","answer":"..."},{"question":"...","answer":"..."}],
   "howToSteps": ["...","...","...","..."],
-  "bodyMarkdown": "full markdown with H2/H3 and actionable steps"
+  "bodyMarkdown": "full markdown, 1200-2000 words, with H2/H3 and actionable steps"
 }
 
 Rules:
@@ -176,6 +214,10 @@ Rules:
 - Keep content practical, clear, and actionable.
 - Avoid exaggerated promises.
 - Do not invent statistics.
+- English only.
+- Follow this article flow: intro, quick answer box, body sections, pro tip box, FAQ, conclusion, internal link suggestions.
+- Include at least one comparison table when the topic has multiple options.
+- Image must be from free non-AI stock sources (Unsplash/Pexels/Pixabay/Wikimedia).
 - Respond with valid JSON only (no markdown fences or extra text).`;
 
 	const maxAttempts = 3;
