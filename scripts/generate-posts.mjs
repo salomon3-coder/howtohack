@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { jsonrepair } from "jsonrepair";
 
 function resolvePostsPerRun(rawValue) {
 	const fallback = 3;
@@ -44,7 +45,12 @@ function parseJsonFromText(text) {
 		if (!match) {
 			throw new Error("No valid JSON block found in model response.");
 		}
-		return JSON.parse(match[0]);
+		try {
+			return JSON.parse(match[0]);
+		} catch {
+			const repaired = jsonrepair(match[0]);
+			return JSON.parse(repaired);
+		}
 	}
 }
 
