@@ -38,6 +38,6 @@ npm run build
 
 ## Notas de contenido
 
-- El script incluye fallback local si falta `ANTHROPIC_API_KEY`.
+- El script es estricto: sin `ANTHROPIC_API_KEY` el workflow falla.
 - Los articulos se publican como contenido etico y practico.
 - Para imagenes libres no-AI, puedes ampliar el script con una API de stock libre antes de publicar.

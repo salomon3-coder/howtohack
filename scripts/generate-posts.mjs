@@ -65,7 +65,7 @@ function buildFrontmatter(post) {
 async function callClaude(topic) {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
 	if (!apiKey) {
-		return null;
+		throw new Error("Missing ANTHROPIC_API_KEY. Configure it in GitHub Actions secrets.");
 	}
 
 	const prompt = `Genera UN articulo util y etico en espanol para howtohack.net.
@@ -115,52 +115,6 @@ Reglas:
 	return parseJsonFromText(text);
 }
 
-function buildFallbackPost(topic) {
-	const title = `Como resolver: ${topic}`;
-	return {
-		title,
-		description: `Guia paso a paso para ${topic} de forma simple y etica.`,
-		category: "Software",
-		tags: ["guia practica", "paso a paso", "solucion"],
-		faq: [
-			{
-				question: "Cuanto tiempo toma aplicar esta solucion?",
-				answer: "En la mayoria de casos entre 10 y 30 minutos.",
-			},
-			{
-				question: "Necesito herramientas pagas?",
-				answer: "No, puedes empezar con opciones gratuitas.",
-			},
-		],
-		howToSteps: [
-			"Identifica el problema exacto y cuando ocurre.",
-			"Aplica una solucion simple y reversible primero.",
-			"Valida resultados con una prueba corta.",
-			"Documenta lo que funciono para repetirlo luego.",
-		],
-		bodyMarkdown: `## Que vas a lograr
-
-Con esta guia vas a resolver **${topic}** con pasos simples y sin tecnicismos innecesarios.
-
-## Paso a paso
-
-1. Define el problema concreto y su impacto.
-2. Haz una prueba rapida con la solucion de menor riesgo.
-3. Ajusta configuraciones segun resultado.
-4. Verifica que el problema no vuelva durante 24 horas.
-
-## Errores comunes
-
-- Cambiar demasiadas cosas al mismo tiempo.
-- No medir antes y despues.
-- No dejar registro de los cambios.
-
-## Conclusion
-
-Aplica mejoras pequenas, valida y estandariza el proceso para que sea repetible.`,
-	};
-}
-
 async function ensureOutputDir() {
 	await fs.mkdir(OUTPUT_DIR, { recursive: true });
 }
@@ -184,17 +138,24 @@ async function writePostFile(post) {
 }
 
 async function main() {
+	if (!process.env.ANTHROPIC_API_KEY) {
+		throw new Error("ANTHROPIC_API_KEY is required. Add it to GitHub Actions secrets.");
+	}
+
 	await ensureOutputDir();
 	const selectedTopics = TOPICS.sort(() => 0.5 - Math.random()).slice(0, POSTS_PER_RUN);
 	const created = [];
+	let generatedViaClaude = 0;
 
 	for (const topic of selectedTopics) {
-		const post = (await callClaude(topic).catch(() => null)) ?? buildFallbackPost(topic);
+		const post = await callClaude(topic);
 		const filePath = await writePostFile(post);
 		created.push(filePath);
+		generatedViaClaude += 1;
 	}
 
 	console.log(`Created ${created.length} post(s):`);
+	console.log(`Generated via Claude API: ${generatedViaClaude}`);
 	created.forEach((file) => console.log(`- ${path.relative(process.cwd(), file)}`));
 }
 
