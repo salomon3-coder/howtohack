@@ -1,7 +1,19 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 
-const POSTS_PER_RUN = Number.parseInt(process.env.POSTS_PER_RUN ?? "3", 10);
+function resolvePostsPerRun(rawValue) {
+	const fallback = 3;
+	if (!rawValue || rawValue.trim() === "") {
+		return fallback;
+	}
+	const parsed = Number.parseInt(rawValue, 10);
+	if (!Number.isFinite(parsed) || parsed <= 0) {
+		return fallback;
+	}
+	return parsed;
+}
+
+const POSTS_PER_RUN = resolvePostsPerRun(process.env.POSTS_PER_RUN);
 const OUTPUT_DIR = path.resolve("src/content/blog");
 const MODEL = process.env.ANTHROPIC_MODEL ?? "claude-3-5-sonnet-20241022";
 
