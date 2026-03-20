@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../layouts/Layout.astro";
+import PostCard from "../components/PostCard.astro";
 
 const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
 	.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
@@ -16,86 +17,204 @@ const getReadingMinutes = (post) => {
 	const words = (post.body ?? "").trim().split(/\s+/).filter(Boolean).length;
 	return Math.max(1, Math.ceil(words / 220));
 };
+
+const featuredSlug = featuredPost
+	? (featuredPost.slug ?? featuredPost.id).replace(/\.md$/, "")
+	: "";
+const featuredHref = featuredPost ? `/blog/${featuredSlug}/` : "/blog/";
+const featuredImage = featuredPost?.data.image?.url;
+const featuredAlt = featuredPost?.data.image?.alt ?? "";
+
+/** Editorial hero collage — real stock photos (Unsplash). */
+const heroCollage = [
+	{
+		src: "https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=720&q=80",
+		alt: "Laptop and coffee on a clean desk",
+		class: "home-collage__img home-collage__img--1",
+	},
+	{
+		src: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=560&q=80",
+		alt: "Team collaborating around a table",
+		class: "home-collage__img home-collage__img--2",
+	},
+	{
+		src: "https://images.unsplash.com/photo-1552664730-d307ca884978?w=560&q=80",
+		alt: "People reviewing notes together",
+		class: "home-collage__img home-collage__img--3",
+	},
+];
+
+const categories = [
+	{ label: "Home", blurb: "Repairs, savings, daily fixes", href: "/blog/" },
+	{ label: "Software", blurb: "Speed, tools, productivity", href: "/blog/" },
+	{ label: "Business", blurb: "Workflows & teamwork", href: "/blog/" },
+	{ label: "Online", blurb: "Security & accounts", href: "/blog/" },
+];
 ---
 
 <Layout
 	title="HowToHack | Practical step-by-step solutions"
 	description="Ethical hacks and easy guides for home, work, and software problems."
 >
-	<main>
-		<section class="hero">
-			<p class="eyebrow">HowToHack Magazine</p>
-			<h1>A no-fluff website that helps you fix things fast</h1>
-			<p class="muted">
-				Clear and ethical guides for home, work, and software. We publish actionable solutions
-				built for real people, not just experts.
-			</p>
-			<div class="hero-actions">
-				<a class="btn" href="/blog/">Explore articles</a>
-				<a class="btn secondary" href="/blog/">See latest posts</a>
+	<main class="home">
+		<section class="home-hero" aria-labelledby="home-hero-title">
+			<div class="home-hero__copy">
+				<p class="eyebrow home-eyebrow">Magazine · Ethical how-tos</p>
+				<h1 id="home-hero-title" class="home-title">
+					Solve real problems with <span class="home-title__accent">clear, friendly</span> guides
+				</h1>
+				<p class="home-lead muted">
+					No fluff — just step-by-step articles for home, work, and software. Built for busy people
+					who want results today, not a computer science degree.
+				</p>
+				<div class="hero-actions home-hero__actions">
+					<a class="btn btn--primary" href="/blog/">Browse all articles</a>
+					<a class="btn btn--ghost" href="#latest">Jump to latest</a>
+				</div>
+				<ul class="home-trust" aria-label="What we focus on">
+					<li>
+						<span class="home-trust__icon" aria-hidden="true">✓</span>
+						<span>Actionable checklists</span>
+					</li>
+					<li>
+						<span class="home-trust__icon" aria-hidden="true">✓</span>
+						<span>Ethical, safe advice</span>
+					</li>
+					<li>
+						<span class="home-trust__icon" aria-hidden="true">✓</span>
+						<span>Readable on any device</span>
+					</li>
+				</ul>
+			</div>
+			<div class="home-hero__visual">
+				<div class="home-collage" aria-hidden="true">
+					<div class="home-collage__glow" />
+					{
+						heroCollage.map((img) => (
+							<img class={img.class} src={img.src} alt="" width="360" height="240" loading="eager" />
+						))
+					}
+				</div>
 			</div>
 		</section>
 
-		<section class="split">
-			<article class="panel">
-				<h3>Why HowToHack works</h3>
-				<p class="muted">
-					We explain things step by step, avoid unnecessary jargon, and prioritize safe actions
-					you can apply today.
-				</p>
-				<ul class="mini-list">
-					<li>Short, practical, results-focused guides</li>
-					<li>Ethical approach: solve, optimize, improve</li>
-					<li>Fresh content designed for real SEO outcomes</li>
-				</ul>
-			</article>
-			<article class="panel">
-				<h3>Main categories</h3>
-				<ul class="mini-list">
-					<li><strong>Home:</strong> savings, maintenance, daily fixes</li>
-					<li><strong>Software:</strong> common errors, speed, productivity</li>
-					<li><strong>Business:</strong> processes, teamwork, digital workflows</li>
-					<li><strong>Online:</strong> security, accounts, web tools</li>
-				</ul>
-			</article>
+		<section class="home-categories" aria-labelledby="cat-heading">
+			<div class="section-head">
+				<h2 id="cat-heading" class="section-head__title">Explore by topic</h2>
+				<p class="section-head__sub muted">Pick a lane — every guide stays practical and jargon-light.</p>
+			</div>
+			<div class="home-cat-grid">
+				{
+					categories.map((c) => (
+						<a class="home-cat-card" href={c.href}>
+							<span class="home-cat-card__label">{c.label}</span>
+							<span class="home-cat-card__blurb">{c.blurb}</span>
+							<span class="home-cat-card__go">View articles →</span>
+						</a>
+					))
+				}
+			</div>
 		</section>
 
 		{
 			featuredPost && (
-				<section class="featured">
-					<p class="meta-line">
-						<span class="badge">{featuredPost.data.category}</span>
-						<span>{formatDate(featuredPost.data.pubDate)}</span>
-						<span>{getReadingMinutes(featuredPost)} min read</span>
-					</p>
-					<h2>
-						<a href={`/blog/${(featuredPost.slug ?? featuredPost.id).replace(/\.md$/, "")}/`}>
-							{featuredPost.data.title}
+				<section class="home-featured-wrap" aria-labelledby="featured-heading">
+					<div class="section-head section-head--tight">
+						<h2 id="featured-heading" class="section-head__title">
+							Editor&apos;s pick
+						</h2>
+						<a class="section-head__link" href="/blog/">
+							See blog
 						</a>
-					</h2>
-					<p class="muted">{featuredPost.data.description}</p>
+					</div>
+					<article class="featured-mega">
+						<a class="featured-mega__media" href={featuredHref} tabindex="-1" aria-hidden="true">
+							{featuredImage ? (
+								<img
+									src={featuredImage}
+									alt={featuredAlt || featuredPost.data.title}
+									width="960"
+									height="600"
+									loading="eager"
+									decoding="async"
+								/>
+							) : (
+								<div class="featured-mega__placeholder" />
+							)}
+							<div class="featured-mega__shine" />
+						</a>
+						<div class="featured-mega__content">
+							<p class="meta-line featured-mega__meta">
+								<span class="badge">{featuredPost.data.category}</span>
+								<span class="featured-mega__date">{formatDate(featuredPost.data.pubDate)}</span>
+								<span>{getReadingMinutes(featuredPost)} min read</span>
+							</p>
+							<h3 class="featured-mega__title">
+								<a href={featuredHref}>{featuredPost.data.title}</a>
+							</h3>
+							<p class="featured-mega__desc">{featuredPost.data.description}</p>
+							<a class="btn btn--light" href={featuredHref}>
+								Read full guide
+							</a>
+						</div>
+					</article>
 				</section>
 			)
 		}
 
-		<h2>Latest published</h2>
-		<div class="grid">
+		<section class="home-latest" id="latest" aria-labelledby="latest-heading">
+			<div class="section-head">
+				<h2 id="latest-heading" class="section-head__title">Latest published</h2>
+				<a class="section-head__link" href="/blog/">
+					All posts →
+				</a>
+			</div>
 			{
-				otherPosts.map((post) => (
-					<article class="card">
-						<p class="meta-line">
-							<span class="badge">{post.data.category}</span>
-							<span>{formatDate(post.data.pubDate)}</span>
-							<span>{getReadingMinutes(post)} min read</span>
-						</p>
-						<h3>
-							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
-						</h3>
-						<p class="muted">{post.data.description}</p>
-						<p><a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>Read article</a></p>
-					</article>
-				))
+				otherPosts.length > 0 ? (
+					<div class="home-post-grid">
+						{otherPosts.map((post) => {
+							const slug = (post.slug ?? post.id).replace(/\.md$/, "");
+							return (
+								<PostCard
+									href={`/blog/${slug}/`}
+									title={post.data.title}
+									description={post.data.description}
+									category={post.data.category}
+									dateLabel={formatDate(post.data.pubDate)}
+									readMinutes={getReadingMinutes(post)}
+									imageUrl={post.data.image?.url}
+									imageAlt={post.data.image?.alt}
+								/>
+							);
+						})}
+					</div>
+				) : (
+					<div class="home-empty card">
+						<p class="home-empty__title">Fresh guides are on the way</p>
+						<p class="muted">Check the blog soon — we publish new step-by-step articles regularly.</p>
+						<a class="btn btn--primary" href="/blog/">
+							Open blog
+						</a>
+					</div>
+				)
 			}
-		</div>
+		</section>
+
+		<section class="home-cta card home-cta--band" aria-labelledby="cta-heading">
+			<div class="home-cta__inner">
+				<div>
+					<h2 id="cta-heading" class="home-cta__title">Want the next fix before everyone else?</h2>
+					<p class="muted home-cta__text">
+						New articles land on the site often. Bookmark HowToHack or drop by the blog — no spam, just
+						useful guides.
+					</p>
+				</div>
+				<div class="home-cta__actions">
+					<a class="btn btn--primary" href="/blog/">
+						Explore the blog
+					</a>
+				</div>
+			</div>
+		</section>
 	</main>
 </Layout>

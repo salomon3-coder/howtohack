@@ -1,0 +1,69 @@
+---
+interface Props {
+	href: string;
+	title: string;
+	description: string;
+	category: string;
+	dateLabel: string;
+	readMinutes: number;
+	imageUrl?: string;
+	imageAlt?: string;
+	variant?: "default" | "compact";
+	/** For blog search filter */
+	searchBlob?: string;
+}
+
+const {
+	href,
+	title,
+	description,
+	category,
+	dateLabel,
+	readMinutes,
+	imageUrl,
+	imageAlt = "",
+	variant = "default",
+	searchBlob,
+} = Astro.props;
+
+const hasImage = Boolean(imageUrl);
+---
+
+<article
+	class:list={["card-post", variant === "compact" && "card-post--compact"]}
+	data-search={searchBlob}
+>
+	<a class="card-post__media" href={href} tabindex="-1" aria-hidden="true">
+		{
+			hasImage ? (
+				<img
+					src={imageUrl}
+					alt={imageAlt || title}
+					width="640"
+					height="400"
+					loading="lazy"
+					decoding="async"
+				/>
+			) : (
+				<div class="card-post__placeholder" aria-hidden="true">
+					<span class="card-post__placeholder-icon">📖</span>
+				</div>
+			)
+		}
+	</a>
+	<div class="card-post__body">
+		<p class="meta-line card-post__meta">
+			<span class="badge">{category}</span>
+			<span>{dateLabel}</span>
+			<span>{readMinutes} min read</span>
+		</p>
+		<h3 class="card-post__title">
+			<a href={href}>{title}</a>
+		</h3>
+		<p class="muted card-post__desc">{description}</p>
+		<a class="card-post__cta" href={href}>
+			Read article
+			<span class="card-post__cta-arrow" aria-hidden="true">→</span>
+		</a>
+	</div>
+</article>

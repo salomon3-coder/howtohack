@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Layout from "../../../layouts/Layout.astro";
+import PostCard from "../../../components/PostCard.astro";
 
 const PAGE_SIZE = 6;
 
@@ -35,24 +36,26 @@ const getReadingMinutes = (post) => {
 	<main>
 		<section class="hero hero-blog">
 			<p class="eyebrow">HowToHack Magazine</p>
-			<h1>Latest articles - page {safePage}</h1>
-			<p class="muted">Browse the full archive of published guides.</p>
+			<h1>Latest articles — page {safePage}</h1>
+			<p class="muted hero-blog__lead">Browse the full archive of published guides.</p>
 		</section>
-		<div class="grid">
+		<div class="blog-grid">
 			{
-				posts.map((post) => (
-					<article class="card">
-						<p class="meta-line">
-							<span class="badge">{post.data.category}</span>
-							<span>{formatDate(post.data.pubDate)}</span>
-							<span>{getReadingMinutes(post)} min read</span>
-						</p>
-						<h3>
-							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
-						</h3>
-						<p class="muted">{post.data.description}</p>
-					</article>
-				))
+				posts.map((post) => {
+					const slug = (post.slug ?? post.id).replace(/\.md$/, "");
+					return (
+						<PostCard
+							href={`/blog/${slug}/`}
+							title={post.data.title}
+							description={post.data.description}
+							category={post.data.category}
+							dateLabel={formatDate(post.data.pubDate)}
+							readMinutes={getReadingMinutes(post)}
+							imageUrl={post.data.image?.url}
+							imageAlt={post.data.image?.alt}
+						/>
+					);
+				})
 			}
 		</div>
 		<nav class="pagination" aria-label="Article pagination">
