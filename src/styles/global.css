@@ -1,11 +1,11 @@
 :root {
-	--bg: #f4f7fb;
+	--bg: #f1f5f9;
 	--surface: #ffffff;
 	--text: #0f172a;
 	--muted: #475569;
 	--line: #e2e8f0;
-	--brand: #2563eb;
-	--brand-dark: #1e40af;
+	--brand: #0f766e;
+	--brand-dark: #115e59;
 	--radius: 14px;
 }
 
@@ -20,6 +20,7 @@ body {
 	font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
 	background: var(--bg);
 	color: var(--text);
+	line-height: 1.65;
 }
 
 a {
@@ -52,6 +53,7 @@ a:hover {
 
 .brand {
 	font-weight: 800;
+	letter-spacing: -0.02em;
 	color: var(--text);
 }
 
@@ -78,6 +80,10 @@ a:hover {
 .hero {
 	padding: 1.4rem;
 	margin-bottom: 1rem;
+	background:
+		radial-gradient(1200px 300px at 10% -30%, #dbeafe 0, transparent 45%),
+		radial-gradient(1200px 300px at 90% -30%, #ccfbf1 0, transparent 45%),
+		var(--surface);
 }
 
 .muted {
@@ -91,7 +97,8 @@ a:hover {
 }
 
 .card h3 {
-	margin-top: 0;
+	margin: 0.3rem 0 0.6rem;
+	line-height: 1.3;
 }
 
 .btn {
@@ -127,4 +134,71 @@ a:hover {
 	max-width: 100%;
 	border-radius: 12px;
 	border: 1px solid var(--line);
+}
+
+.post h1 {
+	line-height: 1.25;
+	margin-bottom: 0.5rem;
+}
+
+.post article h2 {
+	margin-top: 1.8rem;
+}
+
+.eyebrow {
+	font-size: 0.8rem;
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	font-weight: 700;
+	color: var(--brand-dark);
+	margin-bottom: 0.35rem;
+}
+
+.meta-line {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.55rem;
+	align-items: center;
+	color: var(--muted);
+	font-size: 0.88rem;
+	margin: 0 0 0.6rem;
+}
+
+.badge {
+	background: #ecfeff;
+	color: #155e75;
+	border: 1px solid #bae6fd;
+	padding: 0.16rem 0.45rem;
+	border-radius: 999px;
+	font-size: 0.76rem;
+	font-weight: 700;
+}
+
+.featured {
+	background: linear-gradient(130deg, #0f172a, #1e293b 55%, #334155);
+	color: #f8fafc;
+	padding: 1.4rem;
+	border-radius: var(--radius);
+	margin: 1rem 0 1.2rem;
+}
+
+.featured .muted {
+	color: #cbd5e1;
+}
+
+.featured a {
+	color: #f8fafc;
+}
+
+.featured .badge {
+	background: rgba(94, 234, 212, 0.18);
+	color: #99f6e4;
+	border-color: rgba(94, 234, 212, 0.3);
+}
+
+@media (max-width: 720px) {
+	.header-wrap {
+		flex-direction: column;
+		align-items: flex-start;
+	}
 }

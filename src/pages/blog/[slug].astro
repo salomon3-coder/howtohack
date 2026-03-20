@@ -15,6 +15,12 @@ const postSlug = (post.slug ?? post.id).replace(/\.md$/, "");
 const { Content } = await render(post);
 const postUrl = new URL(`/blog/${postSlug}/`, Astro.site ?? Astro.url.origin).toString();
 const imageUrl = post.data.image?.url;
+const readingMinutes = Math.max(1, Math.ceil((post.body ?? "").trim().split(/\s+/).filter(Boolean).length / 220));
+const formattedDate = new Intl.DateTimeFormat("es-CL", {
+	day: "2-digit",
+	month: "short",
+	year: "numeric",
+}).format(post.data.pubDate);
 
 const articleSchema = {
 	"@context": "https://schema.org",
@@ -66,6 +72,11 @@ const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
 	<main>
 		<article class="post">
 			<p><a href="/blog/">Volver al blog</a></p>
+			<p class="meta-line">
+				<span class="badge">{post.data.category}</span>
+				<span>{formattedDate}</span>
+				<span>{readingMinutes} min lectura</span>
+			</p>
 			<h1>{post.data.title}</h1>
 			<p class="muted">{post.data.description}</p>
 			{

@@ -5,6 +5,17 @@ import Layout from "../layouts/Layout.astro";
 const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
 	.sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime())
 	.slice(0, 10);
+
+const featuredPost = latestPosts[0];
+const otherPosts = latestPosts.slice(1, 7);
+
+const formatDate = (date) =>
+	new Intl.DateTimeFormat("es-CL", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+
+const getReadingMinutes = (post) => {
+	const words = (post.body ?? "").trim().split(/\s+/).filter(Boolean).length;
+	return Math.max(1, Math.ceil(words / 220));
+};
 ---
 
 <Layout
@@ -13,6 +24,7 @@ const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
 >
 	<main>
 		<section class="hero">
+			<p class="eyebrow">HowToHack Magazine</p>
 			<h1>Resuelve problemas del dia a dia, sin complicarte</h1>
 			<p class="muted">
 				Guias claras y eticas para hogar, trabajo y software. Publicamos hacks practicos que
@@ -20,13 +32,37 @@ const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
 			</p>
 			<p><a class="btn" href="/blog/">Explorar articulos</a></p>
 		</section>
+
+		{
+			featuredPost && (
+				<section class="featured">
+					<p class="meta-line">
+						<span class="badge">{featuredPost.data.category}</span>
+						<span>{formatDate(featuredPost.data.pubDate)}</span>
+						<span>{getReadingMinutes(featuredPost)} min lectura</span>
+					</p>
+					<h2>
+						<a href={`/blog/${(featuredPost.slug ?? featuredPost.id).replace(/\.md$/, "")}/`}>
+							{featuredPost.data.title}
+						</a>
+					</h2>
+					<p class="muted">{featuredPost.data.description}</p>
+				</section>
+			)
+		}
+
 		<h2>Ultimos publicados</h2>
 		<div class="grid">
 			{
-				latestPosts.map((post) => (
+				otherPosts.map((post) => (
 					<article class="card">
+						<p class="meta-line">
+							<span class="badge">{post.data.category}</span>
+							<span>{formatDate(post.data.pubDate)}</span>
+							<span>{getReadingMinutes(post)} min lectura</span>
+						</p>
 						<h3>
-						<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
+							<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
 						</h3>
 						<p class="muted">{post.data.description}</p>
 					</article>
