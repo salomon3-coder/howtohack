@@ -17,6 +17,7 @@ function resolvePostsPerRun(rawValue) {
 const POSTS_PER_RUN = resolvePostsPerRun(process.env.POSTS_PER_RUN);
 const OUTPUT_DIR = path.resolve("src/content/blog");
 const MODEL = process.env.ANTHROPIC_MODEL;
+const MIN_WORDS = 1200;
 
 const TOPICS = [
 	"speed up a slow Windows laptop",
@@ -141,19 +142,48 @@ function normalizePost(raw) {
 	const bodyMarkdown =
 		typeof post.bodyMarkdown === "string" && post.bodyMarkdown.trim() !== ""
 			? post.bodyMarkdown.trim()
-			: `## Introduction
-
-This guide summarizes practical and ethical steps to solve the problem.
-
-## Suggested steps
-
-1. Clearly define the problem.
-2. Apply a simple and safe solution first.
-3. Verify results and document the changes.`;
+			: "";
 
 	const image = normalizeImage(post.image, title);
 
 	return { title, description, category, image, tags, faq, howToSteps, bodyMarkdown };
+}
+
+function countWords(text) {
+	return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+function hasRequiredSections(markdown) {
+	const required = [
+		/##\s+Quick Answer/i,
+		/##\s+Pro Tip/i,
+		/##\s+FAQ/i,
+		/##\s+Conclusion/i,
+		/##\s+Internal Links/i,
+	];
+	return required.every((pattern) => pattern.test(markdown));
+}
+
+function validatePostQuality(rawPost) {
+	const post = normalizePost(rawPost);
+	const issues = [];
+
+	if (!post.bodyMarkdown) {
+		issues.push("missing bodyMarkdown");
+	} else {
+		const words = countWords(post.bodyMarkdown);
+		if (words < MIN_WORDS) {
+			issues.push(`body too short (${words} words, needs ${MIN_WORDS}+)`);
+		}
+		if (!hasRequiredSections(post.bodyMarkdown)) {
+			issues.push("missing required sections (Quick Answer, Pro Tip, FAQ, Conclusion, Internal Links)");
+		}
+	}
+
+	if (post.tags.length < 3) issues.push("need at least 3 tags");
+	if (post.faq.length < 3) issues.push("need at least 3 FAQ entries");
+
+	return { post, issues };
 }
 
 function normalizeImage(rawImage, title) {
@@ -206,7 +236,7 @@ Return only valid JSON with this structure:
   "tags": ["...","...","..."],
   "faq": [{"question":"...","answer":"..."},{"question":"...","answer":"..."}],
   "howToSteps": ["...","...","...","..."],
-  "bodyMarkdown": "full markdown, 1200-2000 words, with H2/H3 and actionable steps"
+  "bodyMarkdown": "full markdown, 1200-2000 words, with required H2 sections: Quick Answer, Pro Tip, FAQ, Conclusion, Internal Links"
 }
 
 Rules:
@@ -251,7 +281,16 @@ Rules:
 		}
 
 		try {
-			return parseJsonFromText(text);
+			const parsed = parseJsonFromText(text);
+			const { post, issues } = validatePostQuality(parsed);
+			if (issues.length > 0) {
+				lastError = new Error(`Low-quality output: ${issues.join("; ")}`);
+				console.warn(
+					`Model output failed quality checks on attempt ${attempt}/${maxAttempts}: ${issues.join("; ")}`,
+				);
+				continue;
+			}
+			return post;
 		} catch (error) {
 			lastError = error;
 			console.warn(`Invalid JSON from model on attempt ${attempt}/${maxAttempts}. Retrying...`);
