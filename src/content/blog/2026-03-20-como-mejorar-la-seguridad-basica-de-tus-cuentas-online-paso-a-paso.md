@@ -18,7 +18,7 @@ faq:
     answer: "Cambia la contraseña de inmediato, activa la autenticación en dos pasos, revisa los dispositivos conectados y notifica al soporte del servicio afectado."
   - question: "¿El doble factor de autenticación por SMS es suficiente?"
     answer: "Es mejor que no tener nada, pero el SMS puede ser vulnerable a ataques de SIM swapping. Siempre que puedas, usa una app de autenticación como Google Authenticator o Aegis."
-howToSteps:
+howToSteps: []
 draft: false
 ---
 ## Introduccion

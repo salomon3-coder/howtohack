@@ -65,6 +65,12 @@ function slugify(input) {
 
 function buildFrontmatter(post) {
 	const safePost = normalizePost(post);
+	const tagsLines = safePost.tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`);
+	const faqLines = safePost.faq.flatMap((item) => [
+		`  - question: "${item.question.replaceAll('"', '\\"')}"`,
+		`    answer: "${item.answer.replaceAll('"', '\\"')}"`,
+	]);
+	const howToLines = safePost.howToSteps.map((step) => `  - "${step.replaceAll('"', '\\"')}"`);
 
 	const lines = [
 		"---",
@@ -72,15 +78,12 @@ function buildFrontmatter(post) {
 		`description: "${safePost.description.replaceAll('"', '\\"')}"`,
 		`pubDate: "${new Date().toISOString()}"`,
 		`category: "${safePost.category}"`,
-		"tags:",
-		...safePost.tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`),
-		"faq:",
-		...safePost.faq.flatMap((item) => [
-			`  - question: "${item.question.replaceAll('"', '\\"')}"`,
-			`    answer: "${item.answer.replaceAll('"', '\\"')}"`,
-		]),
-		"howToSteps:",
-		...safePost.howToSteps.map((step) => `  - "${step.replaceAll('"', '\\"')}"`),
+		safePost.tags.length > 0 ? "tags:" : "tags: []",
+		...tagsLines,
+		safePost.faq.length > 0 ? "faq:" : "faq: []",
+		...faqLines,
+		safePost.howToSteps.length > 0 ? "howToSteps:" : "howToSteps: []",
+		...howToLines,
 		"draft: false",
 		"---",
 		"",

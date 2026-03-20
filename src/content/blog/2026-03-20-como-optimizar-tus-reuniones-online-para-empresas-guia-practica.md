@@ -18,7 +18,7 @@ faq:
     answer: "Comparte una agenda clara antes de la reunión, asigna un moderador y usa una técnica de 'parking lot' para anotar temas que surjan pero que no correspondan al orden del día, para tratarlos en otro momento."
   - question: "¿Es necesario grabar todas las reuniones online?"
     answer: "No todas las reuniones necesitan grabarse. Graba solo aquellas donde se tomen decisiones importantes o se comparta información técnica compleja. Informa siempre a los participantes antes de iniciar la grabación."
-howToSteps:
+howToSteps: []
 draft: false
 ---
 ## Introduccion

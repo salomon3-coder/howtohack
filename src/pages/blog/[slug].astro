@@ -64,22 +64,24 @@ const schema = [articleSchema, faqSchema, howToSchema].filter(Boolean);
 
 <Layout title={post.data.title} description={post.data.description} schema={schema}>
 	<main>
-		<p><a href="/blog/">Volver al blog</a></p>
-		<h1>{post.data.title}</h1>
-		<p>{post.data.description}</p>
-		{
-			post.data.image && (
-				<figure>
-					<img src={post.data.image.url} alt={post.data.image.alt} loading="lazy" />
-					<figcaption>
-						Imagen: {post.data.image.license ?? "Licencia abierta"}{" "}
-						{post.data.image.source && <a href={post.data.image.source}>fuente</a>}
-					</figcaption>
-				</figure>
-			)
-		}
-		<article>
-			<Content />
+		<article class="post">
+			<p><a href="/blog/">Volver al blog</a></p>
+			<h1>{post.data.title}</h1>
+			<p class="muted">{post.data.description}</p>
+			{
+				post.data.image && (
+					<figure>
+						<img src={post.data.image.url} alt={post.data.image.alt} loading="lazy" />
+						<figcaption>
+							Imagen: {post.data.image.license ?? "Licencia abierta"}{" "}
+							{post.data.image.source && <a href={post.data.image.source}>fuente</a>}
+						</figcaption>
+					</figure>
+				)
+			}
+			<article>
+				<Content />
+			</article>
 		</article>
 	</main>
 </Layout>

@@ -18,7 +18,7 @@ faq:
     answer: "Generalmente el aire acondicionado, el calefactor eléctrico y el calentador de agua son los mayores consumidores. Le siguen la lavadora, el refrigerador y el horno eléctrico. Identificar cuáles tienes y cómo los usas es el primer paso."
   - question: "¿Vale la pena cambiar a bombillas LED si ya tengo bombillas de bajo consumo?"
     answer: "Si ya tienes bombillas de bajo consumo tipo CFL, el salto al LED sigue siendo beneficioso en muchos casos, ya que los LED consumen menos energía, duran más y no contienen mercurio. Evalúa el costo del cambio frente al ahorro estimado en tu caso concreto."
-howToSteps:
+howToSteps: []
 draft: false
 ---
 ## Introduccion

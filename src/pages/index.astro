@@ -12,18 +12,26 @@ const latestPosts = (await getCollection("blog", ({ data }) => !data.draft))
 	description="Hacks eticos y guias claras para resolver problemas de hogar, trabajo y software."
 >
 	<main>
-		<h1>HowToHack</h1>
-		<p>Guias practicas, faciles y eticas para resolver problemas reales.</p>
-		<p><a href="/blog/">Ver todos los articulos</a></p>
+		<section class="hero">
+			<h1>Resuelve problemas del dia a dia, sin complicarte</h1>
+			<p class="muted">
+				Guias claras y eticas para hogar, trabajo y software. Publicamos hacks practicos que
+				funcionan de verdad.
+			</p>
+			<p><a class="btn" href="/blog/">Explorar articulos</a></p>
+		</section>
 		<h2>Ultimos publicados</h2>
-		<ul>
+		<div class="grid">
 			{
 				latestPosts.map((post) => (
-					<li>
+					<article class="card">
+						<h3>
 						<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
-					</li>
+						</h3>
+						<p class="muted">{post.data.description}</p>
+					</article>
 				))
 			}
-		</ul>
+		</div>
 	</main>
 </Layout>

@@ -1,0 +1,130 @@
+:root {
+	--bg: #f4f7fb;
+	--surface: #ffffff;
+	--text: #0f172a;
+	--muted: #475569;
+	--line: #e2e8f0;
+	--brand: #2563eb;
+	--brand-dark: #1e40af;
+	--radius: 14px;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+	background: var(--bg);
+	color: var(--text);
+}
+
+a {
+	color: var(--brand);
+	text-decoration: none;
+}
+
+a:hover {
+	color: var(--brand-dark);
+	text-decoration: underline;
+}
+
+.site-header {
+	background: var(--surface);
+	border-bottom: 1px solid var(--line);
+	position: sticky;
+	top: 0;
+	z-index: 20;
+}
+
+.header-wrap {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 0.9rem 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+
+.brand {
+	font-weight: 800;
+	color: var(--text);
+}
+
+.nav {
+	display: flex;
+	gap: 1rem;
+}
+
+.container {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 2rem 1rem;
+}
+
+.hero,
+.card,
+.post {
+	background: var(--surface);
+	border: 1px solid var(--line);
+	border-radius: var(--radius);
+	padding: 1.1rem 1.2rem;
+}
+
+.hero {
+	padding: 1.4rem;
+	margin-bottom: 1rem;
+}
+
+.muted {
+	color: var(--muted);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+	gap: 1rem;
+}
+
+.card h3 {
+	margin-top: 0;
+}
+
+.btn {
+	display: inline-block;
+	background: var(--brand);
+	color: #fff;
+	border-radius: 10px;
+	padding: 0.55rem 0.9rem;
+	font-weight: 600;
+}
+
+.btn:hover {
+	background: var(--brand-dark);
+	color: #fff;
+	text-decoration: none;
+}
+
+.site-footer {
+	border-top: 1px solid var(--line);
+	margin-top: 2rem;
+	background: var(--surface);
+}
+
+.footer-wrap {
+	max-width: 980px;
+	margin: 0 auto;
+	padding: 1rem;
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+
+.post img {
+	max-width: 100%;
+	border-radius: 12px;
+	border: 1px solid var(--line);
+}

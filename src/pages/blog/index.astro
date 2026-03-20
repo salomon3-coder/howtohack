@@ -13,15 +13,18 @@ const posts = (await getCollection("blog", ({ data }) => !data.draft)).sort(
 >
 	<main>
 		<h1>Articulos recientes</h1>
-		<ul>
+		<p class="muted">Selecciona una guia y sigue los pasos. Todo orientado a resultados practicos.</p>
+		<div class="grid">
 			{
 				posts.map((post) => (
-					<li>
+					<article class="card">
+						<h3>
 						<a href={`/blog/${(post.slug ?? post.id).replace(/\.md$/, "")}/`}>{post.data.title}</a>
+						</h3>
 						<p>{post.data.description}</p>
-					</li>
+					</article>
 				))
 			}
-		</ul>
+		</div>
 	</main>
 </Layout>
