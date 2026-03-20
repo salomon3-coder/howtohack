@@ -22,7 +22,7 @@ faq:
   - question: "Why won't my computer recognize my printer when connected via USB?"
     answer: "Try a different USB cable or a different USB port on your computer. Outdated or corrupt printer drivers are another common cause — visit the printer manufacturer's website to download and install the latest drivers for your operating system."
   - question: "How do I clear a stuck print queue that is blocking all print jobs?"
-    answer: "Open Services in Windows (search 'services.msc'), find 'Print Spooler,' and stop the service. Then navigate to C:\Windows\System32\spool\PRINTERS and delete all files in that folder. Restart the Print Spooler service and try printing again."
+    answer: "Open Services in Windows (search 'services.msc'), find 'Print Spooler,' and stop the service. Then navigate to C:\\Windows\\System32\\spool\\PRINTERS and delete all files in that folder. Restart the Print Spooler service and try printing again."
 howToSteps:
   - "Restart your printer, computer, and router to clear temporary connection errors and refresh network settings."
   - "Check all physical connections — ensure the USB cable is firmly plugged in or verify the printer is connected to the correct Wi-Fi network via its display panel or settings page."

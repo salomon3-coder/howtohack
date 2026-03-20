@@ -58,6 +58,15 @@ function parseJsonFromText(text) {
 	}
 }
 
+/** YAML double-quoted strings treat \\ as escape; Windows paths like C:\\Windows break parsing without this. */
+function escapeYamlDoubleQuoted(value) {
+	return String(value)
+		.replace(/\\/g, "\\\\")
+		.replace(/"/g, '\\"')
+		.replace(/\r\n/g, "\n")
+		.replace(/\n/g, "\\n");
+}
+
 function slugify(input) {
 	return input
 		.toLowerCase()
@@ -69,24 +78,24 @@ function slugify(input) {
 
 function buildFrontmatter(post) {
 	const safePost = normalizePost(post);
-	const tagsLines = safePost.tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`);
+	const tagsLines = safePost.tags.map((tag) => `  - "${escapeYamlDoubleQuoted(tag)}"`);
 	const faqLines = safePost.faq.flatMap((item) => [
-		`  - question: "${item.question.replaceAll('"', '\\"')}"`,
-		`    answer: "${item.answer.replaceAll('"', '\\"')}"`,
+		`  - question: "${escapeYamlDoubleQuoted(item.question)}"`,
+		`    answer: "${escapeYamlDoubleQuoted(item.answer)}"`,
 	]);
-	const howToLines = safePost.howToSteps.map((step) => `  - "${step.replaceAll('"', '\\"')}"`);
+	const howToLines = safePost.howToSteps.map((step) => `  - "${escapeYamlDoubleQuoted(step)}"`);
 
 	const lines = [
 		"---",
-		`title: "${safePost.title.replaceAll('"', '\\"')}"`,
-		`description: "${safePost.description.replaceAll('"', '\\"')}"`,
+		`title: "${escapeYamlDoubleQuoted(safePost.title)}"`,
+		`description: "${escapeYamlDoubleQuoted(safePost.description)}"`,
 		`pubDate: "${new Date().toISOString()}"`,
-		`category: "${safePost.category}"`,
+		`category: "${escapeYamlDoubleQuoted(safePost.category)}"`,
 		"image:",
-		`  url: "${safePost.image.url.replaceAll('"', '\\"')}"`,
-		`  alt: "${safePost.image.alt.replaceAll('"', '\\"')}"`,
-		`  license: "${safePost.image.license.replaceAll('"', '\\"')}"`,
-		`  source: "${safePost.image.source.replaceAll('"', '\\"')}"`,
+		`  url: "${escapeYamlDoubleQuoted(safePost.image.url)}"`,
+		`  alt: "${escapeYamlDoubleQuoted(safePost.image.alt)}"`,
+		`  license: "${escapeYamlDoubleQuoted(safePost.image.license)}"`,
+		`  source: "${escapeYamlDoubleQuoted(safePost.image.source)}"`,
 		safePost.tags.length > 0 ? "tags:" : "tags: []",
 		...tagsLines,
 		safePost.faq.length > 0 ? "faq:" : "faq: []",

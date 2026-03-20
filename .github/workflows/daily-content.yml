@@ -31,6 +31,9 @@ jobs:
           POSTS_PER_RUN: ${{ vars.POSTS_PER_RUN }}
         run: npm run generate:posts
 
+      - name: Verify site build (catch broken frontmatter before push)
+        run: npm run build
+
       - name: Commit and push new content
         run: |
           git config user.name "github-actions[bot]"
