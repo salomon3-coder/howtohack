@@ -22,6 +22,26 @@ const MIN_WORDS = 1200;
 const MAX_TOKENS_META = 4096;
 const MAX_TOKENS_BODY = 16384;
 
+/** HTTP statuses where Anthropic often recovers after a delay (overload, rate limit, gateway). */
+const ANTHROPIC_RETRYABLE_STATUS = new Set([429, 500, 502, 503, 529]);
+
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function getAnthropicRetryDelayMs(response, attemptIndex, baseMs) {
+	const retryAfter = response.headers.get("retry-after");
+	if (retryAfter) {
+		const sec = Number(retryAfter);
+		if (Number.isFinite(sec) && sec > 0) {
+			return Math.min(120_000, sec * 1000);
+		}
+	}
+	const exponential = Math.min(120_000, baseMs * 2 ** attemptIndex);
+	const jitter = Math.floor(Math.random() * 2000);
+	return exponential + jitter;
+}
+
 const TOPICS = [
 	"speed up a slow Windows laptop",
 	"reduce household electricity usage",
@@ -270,29 +290,49 @@ function normalizeImage(rawImage, title) {
 }
 
 async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens) {
-	const response = await fetch("https://api.anthropic.com/v1/messages", {
-		method: "POST",
-		headers: {
-			"x-api-key": apiKey,
-			"anthropic-version": "2023-06-01",
-			"content-type": "application/json",
-		},
-		body: JSON.stringify({
-			model: modelToUse,
-			max_tokens: maxTokens,
-			temperature: 0.4,
-			messages: [{ role: "user", content: userContent }],
-		}),
-	});
+	const maxHttpAttempts = Math.max(1, Number.parseInt(process.env.ANTHROPIC_HTTP_RETRIES ?? "8", 10));
+	const baseMs = Math.max(500, Number.parseInt(process.env.ANTHROPIC_RETRY_BASE_MS ?? "2500", 10));
+	let lastBody = "";
 
-	if (!response.ok) {
-		throw new Error(`Anthropic API error: ${response.status} ${await response.text()}`);
+	for (let i = 0; i < maxHttpAttempts; i += 1) {
+		const response = await fetch("https://api.anthropic.com/v1/messages", {
+			method: "POST",
+			headers: {
+				"x-api-key": apiKey,
+				"anthropic-version": "2023-06-01",
+				"content-type": "application/json",
+			},
+			body: JSON.stringify({
+				model: modelToUse,
+				max_tokens: maxTokens,
+				temperature: 0.4,
+				messages: [{ role: "user", content: userContent }],
+			}),
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			const text = data?.content?.[0]?.text?.trim();
+			const stopReason = data?.stop_reason;
+			return { text, stopReason };
+		}
+
+		lastBody = await response.text();
+		const status = response.status;
+		const canRetry = ANTHROPIC_RETRYABLE_STATUS.has(status) && i < maxHttpAttempts - 1;
+
+		if (!canRetry) {
+			throw new Error(`Anthropic API error: ${status} ${lastBody}`);
+		}
+
+		const waitMs = getAnthropicRetryDelayMs(response, i, baseMs);
+		console.warn(
+			`Anthropic API ${status} (transient); waiting ${Math.round(waitMs / 1000)}s before HTTP retry ${i + 2}/${maxHttpAttempts}…`,
+		);
+		await sleep(waitMs);
 	}
 
-	const data = await response.json();
-	const text = data?.content?.[0]?.text?.trim();
-	const stopReason = data?.stop_reason;
-	return { text, stopReason };
+	throw new Error(`Anthropic API error after ${maxHttpAttempts} attempts: ${lastBody}`);
 }
 
 /**
@@ -422,33 +462,50 @@ async function resolveModel(apiKey) {
 		return MODEL.trim();
 	}
 
-	const response = await fetch("https://api.anthropic.com/v1/models", {
-		method: "GET",
-		headers: {
-			"x-api-key": apiKey,
-			"anthropic-version": "2023-06-01",
-		},
-	});
+	const maxHttpAttempts = Math.max(1, Number.parseInt(process.env.ANTHROPIC_HTTP_RETRIES ?? "8", 10));
+	const baseMs = Math.max(500, Number.parseInt(process.env.ANTHROPIC_RETRY_BASE_MS ?? "2500", 10));
+	let lastStatus = 0;
+	let lastBody = "";
 
-	if (!response.ok) {
-		throw new Error(
-			`Could not list Anthropic models (status ${response.status}). Set ANTHROPIC_MODEL explicitly in GitHub Variables.`,
+	for (let i = 0; i < maxHttpAttempts; i += 1) {
+		const response = await fetch("https://api.anthropic.com/v1/models", {
+			method: "GET",
+			headers: {
+				"x-api-key": apiKey,
+				"anthropic-version": "2023-06-01",
+			},
+		});
+
+		if (response.ok) {
+			const data = await response.json();
+			const models = Array.isArray(data?.data) ? data.data.map((m) => m.id).filter(Boolean) : [];
+			if (models.length === 0) {
+				throw new Error("No models available for this API key/workspace.");
+			}
+			const preferred =
+				models.find((id) => id.includes("sonnet")) ??
+				models.find((id) => id.includes("claude")) ??
+				models[0];
+			console.log(`Using Anthropic model: ${preferred}`);
+			return preferred;
+		}
+
+		lastStatus = response.status;
+		lastBody = await response.text();
+		const canRetry = ANTHROPIC_RETRYABLE_STATUS.has(lastStatus) && i < maxHttpAttempts - 1;
+		if (!canRetry) {
+			throw new Error(
+				`Could not list Anthropic models (status ${lastStatus}). Set ANTHROPIC_MODEL explicitly in GitHub Variables. ${lastBody}`,
+			);
+		}
+		const waitMs = getAnthropicRetryDelayMs(response, i, baseMs);
+		console.warn(
+			`Anthropic models list ${lastStatus}; waiting ${Math.round(waitMs / 1000)}s before retry ${i + 2}/${maxHttpAttempts}…`,
 		);
+		await sleep(waitMs);
 	}
 
-	const data = await response.json();
-	const models = Array.isArray(data?.data) ? data.data.map((m) => m.id).filter(Boolean) : [];
-	if (models.length === 0) {
-		throw new Error("No models available for this API key/workspace.");
-	}
-
-	const preferred =
-		models.find((id) => id.includes("sonnet")) ??
-		models.find((id) => id.includes("claude")) ??
-		models[0];
-
-	console.log(`Using Anthropic model: ${preferred}`);
-	return preferred;
+	throw new Error("resolveModel: unexpected end (please report).");
 }
 
 async function ensureOutputDir() {
@@ -484,11 +541,21 @@ async function main() {
 	const created = [];
 	let generatedViaClaude = 0;
 
-	for (const topic of selectedTopics) {
+	const betweenPostsMs = Math.max(
+		0,
+		Number.parseInt(process.env.POST_GENERATION_DELAY_MS ?? "5000", 10),
+	);
+
+	for (let t = 0; t < selectedTopics.length; t += 1) {
+		const topic = selectedTopics[t];
 		const post = await callClaude(topic);
 		const filePath = await writePostFile(post);
 		created.push(filePath);
 		generatedViaClaude += 1;
+		if (betweenPostsMs > 0 && t < selectedTopics.length - 1) {
+			console.log(`Waiting ${betweenPostsMs / 1000}s before next article (reduces API bursts)…`);
+			await sleep(betweenPostsMs);
+		}
 	}
 
 	console.log(`Created ${created.length} post(s):`);

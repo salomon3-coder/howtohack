@@ -20,6 +20,9 @@ In the `howtohack` repository:
 3. (Optional) Create variables:
    - `POSTS_PER_RUN` (example: `10`).
    - `ANTHROPIC_MODEL` (optional; if empty, the script auto-detects an available model).
+   - `ANTHROPIC_HTTP_RETRIES` (optional, default `8`) — retries on API overload (`529`), rate limits (`429`), etc.
+   - `ANTHROPIC_RETRY_BASE_MS` (optional, default `2500`) — base delay for exponential backoff between retries.
+   - `POST_GENERATION_DELAY_MS` (optional, default `5000`) — pause between articles in one run (reduces burst traffic to the API).
 4. Go to `Actions` and enable the `Daily Content Generator` workflow.
 
 ## Run locally
