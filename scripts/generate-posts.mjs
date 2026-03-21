@@ -42,7 +42,11 @@ function getAnthropicRetryDelayMs(response, attemptIndex, baseMs) {
 	return exponential + jitter;
 }
 
-const TOPICS = [
+/**
+ * Only used if dynamic topic generation fails (API error). Keep broad & varied.
+ * Normal runs use Claude to propose fresh topics avoiding published titles.
+ */
+const FALLBACK_TOPIC_POOL = [
 	"speed up a slow Windows laptop",
 	"reduce household electricity usage",
 	"improve Wi-Fi speed without upgrading your plan",
@@ -53,7 +57,208 @@ const TOPICS = [
 	"save time with practical keyboard shortcuts",
 	"remove temporary files safely",
 	"improve basic online account security",
+	"stop Windows updates from breaking your workflow",
+	"choose a budget ergonomic desk setup for long workdays",
+	"fix Bluetooth pairing issues on Windows and Android",
+	"compress PDF files without losing readable quality",
+	"use two-factor authentication without locking yourself out",
+	"clean a mechanical keyboard safely",
+	"improve sleep by reducing bedroom light and noise",
+	"meal prep for busy weeknights on a tight budget",
+	"negotiate a better internet bill with your provider",
+	"spot phishing emails in your inbox before you click",
+	"organize cloud photos across Google, Apple, and OneDrive",
+	"pick a password manager and migrate in one evening",
+	"fix Excel formulas that return errors",
+	"record better audio for video calls with cheap gear",
+	"declutter digital files and find documents faster",
+	"set boundaries for work notifications on your phone",
+	"choose energy-efficient appliances using the label",
+	"travel with electronics safely (adapters, voltage, data)",
+	"back up WhatsApp or Signal chats before switching phones",
+	"fix a running toilet that wastes water",
+	"improve posture when working from a laptop",
 ];
+
+function tokenSet(text) {
+	const m = String(text)
+		.toLowerCase()
+		.match(/[a-z0-9]{4,}/g);
+	return m ? new Set(m) : new Set();
+}
+
+/** Reject topics too close to an already-published title (reduces near-duplicates). */
+function topicOverlapsExisting(topic, existingTitles) {
+	const t = tokenSet(topic);
+	if (t.size === 0) return true;
+	for (const ex of existingTitles) {
+		const e = tokenSet(ex);
+		if (e.size === 0) continue;
+		let inter = 0;
+		for (const w of t) {
+			if (e.has(w)) inter += 1;
+		}
+		const score = inter / Math.min(t.size, e.size);
+		if (score >= 0.45) return true;
+		const tl = topic.toLowerCase();
+		const el = ex.toLowerCase();
+		if (tl.length > 18 && el.includes(tl.slice(0, 18))) return true;
+		if (el.length > 18 && tl.includes(el.slice(0, 18))) return true;
+	}
+	return false;
+}
+
+function extractTitleFromFrontmatter(raw) {
+	const block = raw.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+	if (!block) return null;
+	const fm = block[1];
+	const dq = fm.match(/^title:\s*"((?:\\.|[^"\\])*)"\s*$/m);
+	if (dq) return dq[1].replace(/\\"/g, '"').trim();
+	const sq = fm.match(/^title:\s*'((?:\\.|[^'\\])*)'\s*$/m);
+	if (sq) return sq[1].replace(/\\'/g, "'").trim();
+	const plain = fm.match(/^title:\s*(.+)\s*$/m);
+	return plain ? plain[1].trim().replace(/^["']|["']$/g, "") : null;
+}
+
+async function loadExistingBlogTitles() {
+	const names = await fs.readdir(OUTPUT_DIR).catch(() => []);
+	const mdFiles = names.filter((n) => n.endsWith(".md"));
+	const titles = [];
+	for (const name of mdFiles) {
+		const raw = await fs.readFile(path.join(OUTPUT_DIR, name), "utf8");
+		const title = extractTitleFromFrontmatter(raw);
+		if (title) titles.push(title);
+	}
+	titles.sort((a, b) => b.localeCompare(a));
+	const maxList = Number.parseInt(process.env.TOPIC_AVOID_TITLE_LIMIT ?? "120", 10);
+	return titles.slice(0, Math.max(20, maxList));
+}
+
+function parseTopicsResponse(text) {
+	const cleaned = text
+		.replace(/^```json\s*/i, "")
+		.replace(/^```\s*/i, "")
+		.replace(/```$/i, "")
+		.trim();
+
+	let parsed;
+	try {
+		parsed = JSON.parse(cleaned);
+	} catch {
+		const objMatch = cleaned.match(/\{[\s\S]*\}/);
+		const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+		if (objMatch) {
+			try {
+				parsed = JSON.parse(objMatch[0]);
+			} catch {
+				parsed = JSON.parse(jsonrepair(objMatch[0]));
+			}
+		} else if (arrMatch) {
+			try {
+				parsed = JSON.parse(arrMatch[0]);
+			} catch {
+				parsed = JSON.parse(jsonrepair(arrMatch[0]));
+			}
+		}
+	}
+	if (parsed == null) {
+		throw new Error("Could not parse topics JSON.");
+	}
+	if (Array.isArray(parsed)) {
+		return parsed.map((x) => String(x).trim()).filter(Boolean);
+	}
+	if (Array.isArray(parsed.topics)) {
+		return parsed.topics.map((x) => String(x).trim()).filter(Boolean);
+	}
+	throw new Error('Response must be a JSON array or { "topics": [...] }.');
+}
+
+async function generateFreshTopics(apiKey, modelToUse, count, existingTitles) {
+	const maxTopicTokens = Math.min(
+		8192,
+		Math.max(2048, Number.parseInt(process.env.TOPIC_PLAN_MAX_TOKENS ?? "4096", 10)),
+	);
+	const listed = existingTitles.length
+		? existingTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")
+		: "(none yet — pick diverse evergreen how-tos.)";
+
+	const prompt = `You are the editorial planner for howtohack.net.
+
+Site rules (must follow when proposing topics):
+- English only; practical ethical how-to content for everyday adults (not experts).
+- Legal, safe topics only — NO illegal hacking, malware, bypassing paywalls, or harmful instructions.
+- Strong search intent: fixes, setups, savings, productivity, home, software, business, online security.
+- Mix categories across: Home, Software, Business, Online (not all from one bucket).
+- Each topic string must be specific enough to support a 1,200+ word guide (not a single vague word).
+- Monetization-aware: informational-commercial angles are OK when honest.
+
+Already published article titles — do NOT repeat, rephrase slightly, or overlap heavily with these (pick genuinely new angles):
+${listed}
+
+Return ONLY valid JSON (no markdown fences) with exactly ${count} strings:
+{ "topics": ["...", "..."] }
+
+Each array item is a short topic phrase (like a working title angle), not a full article.`;
+
+	const maxAttempts = Number.parseInt(process.env.TOPIC_BATCH_ATTEMPTS ?? "3", 10);
+	let lastErr = null;
+
+	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+		try {
+			const { text, stopReason } = await anthropicMessage(
+				apiKey,
+				modelToUse,
+				`${prompt}\n\nPlanner attempt: ${attempt}/${maxAttempts}`,
+				maxTopicTokens,
+			);
+			if (!text) throw new Error("Empty topic planner response.");
+			if (stopReason === "max_tokens") {
+				console.warn("Topic planner hit max_tokens; retrying…");
+				throw new Error("Topic planner truncated.");
+			}
+			let topics = parseTopicsResponse(text);
+			topics = [...new Set(topics.map((t) => t.replace(/\s+/g, " ").trim()))];
+			topics = topics.filter((t) => t.length >= 12);
+			topics = topics.filter((t) => !topicOverlapsExisting(t, existingTitles));
+
+			if (topics.length >= count) {
+				console.log(`Planned ${count} fresh topic(s) (attempt ${attempt}).`);
+				return topics.slice(0, count);
+			}
+			lastErr = new Error(`Only ${topics.length} novel topics after filter (need ${count}).`);
+			console.warn(lastErr.message);
+		} catch (e) {
+			lastErr = e;
+			console.warn(`Topic planning attempt ${attempt}/${maxAttempts} failed: ${e.message}`);
+		}
+	}
+
+	throw lastErr ?? new Error("Failed to plan fresh topics.");
+}
+
+function pickFallbackTopics(count, existingTitles) {
+	const pool = [...FALLBACK_TOPIC_POOL].sort(() => Math.random() - 0.5);
+	const out = [];
+	for (const t of pool) {
+		if (out.length >= count) break;
+		if (!topicOverlapsExisting(t, existingTitles)) out.push(t);
+	}
+	if (out.length < count) {
+		console.warn(
+			"Fallback: not enough novel static topics; filling from pool even if similar to past posts — prefer fixing API topic planner.",
+		);
+		for (const t of pool) {
+			if (out.length >= count) break;
+			if (!out.includes(t)) out.push(t);
+		}
+	}
+	if (out.length < count) {
+		throw new Error(
+			`Static FALLBACK_TOPIC_POOL only has ${FALLBACK_TOPIC_POOL.length} topics; cannot fill ${count}. Lower POSTS_PER_RUN or restore API topic planning.`,
+		);
+	}
+	return out.slice(0, count);
+}
 
 function parseJsonFromText(text) {
 	const cleaned = text
@@ -338,13 +543,13 @@ async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens) {
 /**
  * Two-step generation: metadata JSON (small) + long body as plain markdown (avoids truncation).
  */
-async function callClaude(topic) {
+async function callClaude(topic, resolvedModel = null) {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
 	if (!apiKey) {
 		throw new Error("Missing ANTHROPIC_API_KEY. Configure it in GitHub Actions secrets.");
 	}
 
-	const modelToUse = await resolveModel(apiKey);
+	const modelToUse = resolvedModel ?? (await resolveModel(apiKey));
 
 	const metaPrompt = `Generate metadata for ONE useful and ethical English article for howtohack.net.
 Topic: ${topic}
@@ -537,7 +742,29 @@ async function main() {
 	}
 
 	await ensureOutputDir();
-	const selectedTopics = TOPICS.sort(() => 0.5 - Math.random()).slice(0, POSTS_PER_RUN);
+
+	const apiKey = process.env.ANTHROPIC_API_KEY;
+	const modelToUse = await resolveModel(apiKey);
+	const existingTitles = await loadExistingBlogTitles();
+	console.log(`Loaded ${existingTitles.length} existing title(s) to avoid duplicating.`);
+
+	let selectedTopics;
+	const useStaticOnly = process.env.USE_STATIC_TOPICS_ONLY === "1" || process.env.USE_STATIC_TOPICS_ONLY === "true";
+	if (useStaticOnly) {
+		console.warn("USE_STATIC_TOPICS_ONLY is set — skipping dynamic topic planner.");
+		selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles);
+	} else {
+		try {
+			selectedTopics = await generateFreshTopics(apiKey, modelToUse, POSTS_PER_RUN, existingTitles);
+		} catch (e) {
+			console.warn(`Dynamic topic planning failed: ${e.message}`);
+			selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles);
+		}
+	}
+
+	console.log("Topics for this run:");
+	selectedTopics.forEach((t, i) => console.log(`  ${i + 1}. ${t}`));
+
 	const created = [];
 	let generatedViaClaude = 0;
 
@@ -548,7 +775,7 @@ async function main() {
 
 	for (let t = 0; t < selectedTopics.length; t += 1) {
 		const topic = selectedTopics[t];
-		const post = await callClaude(topic);
+		const post = await callClaude(topic, modelToUse);
 		const filePath = await writePostFile(post);
 		created.push(filePath);
 		generatedViaClaude += 1;

@@ -23,6 +23,12 @@ In the `howtohack` repository:
    - `ANTHROPIC_HTTP_RETRIES` (optional, default `8`) — retries on API overload (`529`), rate limits (`429`), etc.
    - `ANTHROPIC_RETRY_BASE_MS` (optional, default `2500`) — base delay for exponential backoff between retries.
    - `POST_GENERATION_DELAY_MS` (optional, default `5000`) — pause between articles in one run (reduces burst traffic to the API).
+   - `USE_STATIC_TOPICS_ONLY` (optional) — set to `1` or `true` to skip the dynamic topic planner and use the static fallback pool only (not recommended for production).
+   - `TOPIC_AVOID_TITLE_LIMIT` (optional, default `120`) — how many recent post titles to pass to the planner as “already published”.
+   - `TOPIC_BATCH_ATTEMPTS` (optional, default `3`) — retries if the planner returns too few novel topics.
+   - `TOPIC_PLAN_MAX_TOKENS` (optional, default `4096`) — max output tokens for the topic-planning call.
+
+Each run **plans new topics via the API** using your existing post titles so angles stay fresh and SEO overlap drops. The sitemap **excludes** `/article-demo/`, `/faq-demo/`, and `/howto-demo/`.
 4. Go to `Actions` and enable the `Daily Content Generator` workflow.
 
 ## Run locally
