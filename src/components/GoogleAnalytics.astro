@@ -1,0 +1,24 @@
+---
+/**
+ * GA4 — set PUBLIC_GA_MEASUREMENT_ID in Cloudflare Pages (e.g. G-XXXXXXXXXX).
+ * Omit the variable to disable tracking (e.g. local dev).
+ */
+const measurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID?.trim() ?? "";
+const enabled = measurementId.length > 0 && measurementId.startsWith("G-");
+---
+
+{
+	enabled && (
+		<>
+			<script async src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} />
+			<script is:inline define:vars={{ measurementId }}>
+				window.dataLayer = window.dataLayer || [];
+				function gtag() {
+					dataLayer.push(arguments);
+				}
+				gtag("js", new Date());
+				gtag("config", measurementId);
+			</script>
+		</>
+	)
+}

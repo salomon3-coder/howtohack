@@ -36,6 +36,20 @@ npm run build
 - `npm run build`: production build.
 - `npm run generate:posts`: generate articles automatically.
 
+## Analytics (GA4) & AdSense
+
+The layout loads tags **only if** you set these at **build time** (e.g. Cloudflare Pages → **Settings** → **Environment variables**):
+
+| Variable | Example | Purpose |
+|----------|---------|---------|
+| `PUBLIC_GA_MEASUREMENT_ID` | `G-XXXXXXXXXX` | Google Analytics 4 |
+| `PUBLIC_ADSENSE_CLIENT` | `ca-pub-XXXXXXXXXXXXXXXX` | Google AdSense |
+
+- Create the properties in [Google Analytics](https://analytics.google.com/) and [AdSense](https://www.google.com/adsense/).
+- Keep `public/ads.txt` in sync with your real publisher line: `google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0`.
+- If variables are unset, the site builds **without** those scripts (fine for local dev).
+- For EU/UK traffic, plan **cookie consent** and (for ads) **Consent Mode**; see Google’s help for publishers.
+
 ## Content notes
 
 - The script is strict: without `ANTHROPIC_API_KEY`, the workflow fails.

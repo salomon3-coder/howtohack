@@ -1,0 +1,22 @@
+---
+/**
+ * AdSense — set PUBLIC_ADSENSE_CLIENT in Cloudflare Pages (e.g. ca-pub-1234567890123456).
+ * Omit to disable. Pair with public/ads.txt (same publisher ID).
+ * Auto ads: this script alone can let Google place units; you can also add <ins> units later.
+ */
+let client = import.meta.env.PUBLIC_ADSENSE_CLIENT?.trim() ?? "";
+if (client.startsWith("pub-") && !client.startsWith("ca-pub-")) {
+	client = `ca-${client}`;
+}
+const enabled = client.startsWith("ca-pub-") && client.length > 10;
+---
+
+{
+	enabled && (
+		<script
+			async
+			src={`https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${encodeURIComponent(client)}`}
+			crossorigin="anonymous"
+		/>
+	)
+}

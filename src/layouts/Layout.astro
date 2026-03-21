@@ -1,5 +1,7 @@
 ---
 import StructuredData from '../components/StructuredData.astro';
+import GoogleAnalytics from '../components/GoogleAnalytics.astro';
+import AdSenseLoader from '../components/AdSenseLoader.astro';
 import "../styles/global.css";
 
 interface Props {
@@ -33,6 +35,8 @@ const {
 		<meta name="description" content={description} />
 		<link rel="canonical" href={Astro.url.href} />
 		<StructuredData data={schema} />
+		<GoogleAnalytics />
+		<AdSenseLoader />
 	</head>
 	<body>
 		<header class="site-header">
