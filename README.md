@@ -27,8 +27,10 @@ In the `howtohack` repository:
    - `TOPIC_AVOID_TITLE_LIMIT` (optional, default `120`) — how many recent post titles to pass to the planner as “already published”.
    - `TOPIC_BATCH_ATTEMPTS` (optional, default `3`) — retries if the planner returns too few novel topics.
    - `TOPIC_PLAN_MAX_TOKENS` (optional, default `4096`) — max output tokens for the topic-planning call.
+   - `TOPIC_PLANNER_TEMPERATURE` (optional, default `0.92`) — higher = more random topic angles from the planner (still within site rules).
+   - `SLUG_DEDUPE_RETRIES` (optional, default `4`) — if the generated title’s URL slug is too close to an existing post, regenerate with stricter instructions.
 
-Each run **plans new topics via the API** using your existing post titles so angles stay fresh and SEO overlap drops. The sitemap **excludes** `/article-demo/`, `/faq-demo/`, and `/howto-demo/`.
+Each run **plans new topics via the API** using **titles + existing URL slugs** so near-duplicate paths (same story, new date) are blocked. The sitemap **excludes** `/article-demo/`, `/faq-demo/`, and `/howto-demo/`.
 4. Go to `Actions` and enable the `Daily Content Generator` workflow.
 
 ## Run locally

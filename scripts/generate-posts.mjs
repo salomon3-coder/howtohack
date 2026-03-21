@@ -78,13 +78,149 @@ const FALLBACK_TOPIC_POOL = [
 	"back up WhatsApp or Signal chats before switching phones",
 	"fix a running toilet that wastes water",
 	"improve posture when working from a laptop",
+	"calibrate a home oven temperature for even baking",
+	"choose and install LED strip lighting under kitchen cabinets",
+	"set up a basic home weather station and read the data",
+	"clean and maintain a robot vacuum for longer life",
+	"pack electronics for a flight without damaging batteries",
+	"use a phone as a document scanner for receipts",
+	"start a simple vegetable container garden on a balcony",
+	"quiet a squeaky door hinge without making a mess",
+	"organize a small workshop pegboard for hand tools",
+	"improve TV sound with a budget soundbar placement guide",
+	"dry shoes and boots faster after rain without heat damage",
+	"choose a dash cam and install the wiring neatly",
+	"reduce echo in a home office for clearer video calls",
+	"store seasonal clothes to prevent mold and smells",
 ];
+
+/** Hyphen segments ignored when comparing URL slugs (too generic). */
+const SLUG_STOPWORDS = new Set([
+	"how",
+	"to",
+	"for",
+	"the",
+	"and",
+	"with",
+	"your",
+	"from",
+	"that",
+	"this",
+	"into",
+	"when",
+	"what",
+	"why",
+	"are",
+	"you",
+	"not",
+	"but",
+	"get",
+	"set",
+	"use",
+	"using",
+	"new",
+	"best",
+	"ways",
+	"tips",
+	"guide",
+	"step",
+	"easy",
+	"simple",
+	"free",
+	"home",
+	"work",
+	"like",
+	"pro",
+	"more",
+	"less",
+	"make",
+	"fix",
+	"fixing",
+	"common",
+	"daily",
+	"every",
+	"day",
+	"safe",
+	"safely",
+	"quick",
+	"fast",
+	"full",
+	"complete",
+	"beginner",
+	"start",
+	"starting",
+	"really",
+	"actually",
+	"without",
+	"about",
+	"after",
+	"before",
+	"just",
+	"only",
+	"very",
+]);
 
 function tokenSet(text) {
 	const m = String(text)
 		.toLowerCase()
 		.match(/[a-z0-9]{4,}/g);
 	return m ? new Set(m) : new Set();
+}
+
+/** Meaningful hyphen tokens for slug comparison (drops generic SEO words). */
+function meaningfulSlugTokens(slug) {
+	return String(slug)
+		.toLowerCase()
+		.split("-")
+		.filter((p) => p.length >= 4 && !SLUG_STOPWORDS.has(p));
+}
+
+/**
+ * True if proposed slug is the same story as an existing post URL (near-duplicate paths).
+ */
+function slugNearDuplicate(newSlug, existingSlugs) {
+	const ns = String(newSlug).toLowerCase();
+	if (!ns) return false;
+	const nTok = meaningfulSlugTokens(ns);
+	const nSet = new Set(nTok);
+	if (nSet.size === 0) return false;
+
+	for (const ex of existingSlugs) {
+		const es = String(ex).toLowerCase();
+		if (!es) continue;
+		if (ns === es) return true;
+		// One slug is almost contained in the other (same article, minor title tweak)
+		if (ns.length >= 12 && es.length >= 12) {
+			if (ns.includes(es) || es.includes(ns)) {
+				const shorter = Math.min(ns.length, es.length);
+				const longer = Math.max(ns.length, es.length);
+				if (shorter / longer >= 0.82) return true;
+			}
+		}
+		const eSet = new Set(meaningfulSlugTokens(es));
+		if (eSet.size === 0) continue;
+		let inter = 0;
+		for (const w of nSet) {
+			if (eSet.has(w)) inter += 1;
+		}
+		const union = nSet.size + eSet.size - inter;
+		const jaccard = union > 0 ? inter / union : 0;
+		if (jaccard >= 0.5) return true;
+		if (inter >= 4 && inter >= 0.65 * Math.min(nSet.size, eSet.size)) return true;
+	}
+	return false;
+}
+
+/** Extract URL slug stem from a blog filename: 2026-03-21-how-to-foo.md → how-to-foo */
+function slugStemFromBlogFilename(filename) {
+	const base = filename.replace(/\.md$/i, "");
+	const m = base.match(/^\d{4}-\d{2}-\d{2}-(.+)$/);
+	return m ? m[1].toLowerCase() : slugify(base);
+}
+
+async function loadExistingSlugStems() {
+	const names = await fs.readdir(OUTPUT_DIR).catch(() => []);
+	return names.filter((n) => n.endsWith(".md")).map(slugStemFromBlogFilename);
 }
 
 /** Reject topics too close to an already-published title (reduces near-duplicates). */
@@ -99,13 +235,18 @@ function topicOverlapsExisting(topic, existingTitles) {
 			if (e.has(w)) inter += 1;
 		}
 		const score = inter / Math.min(t.size, e.size);
-		if (score >= 0.45) return true;
+		if (score >= 0.32) return true;
 		const tl = topic.toLowerCase();
 		const el = ex.toLowerCase();
-		if (tl.length > 18 && el.includes(tl.slice(0, 18))) return true;
-		if (el.length > 18 && tl.includes(el.slice(0, 18))) return true;
+		if (tl.length >= 14 && el.includes(tl.slice(0, 14))) return true;
+		if (el.length >= 14 && tl.includes(el.slice(0, 14))) return true;
 	}
 	return false;
+}
+
+function topicOverlapsSlugs(topicPhrase, existingSlugs) {
+	const probe = slugify(topicPhrase);
+	return slugNearDuplicate(probe, existingSlugs);
 }
 
 function extractTitleFromFrontmatter(raw) {
@@ -173,14 +314,28 @@ function parseTopicsResponse(text) {
 	throw new Error('Response must be a JSON array or { "topics": [...] }.');
 }
 
-async function generateFreshTopics(apiKey, modelToUse, count, existingTitles) {
+async function generateFreshTopics(apiKey, modelToUse, count, existingTitles, existingSlugs) {
 	const maxTopicTokens = Math.min(
 		8192,
 		Math.max(2048, Number.parseInt(process.env.TOPIC_PLAN_MAX_TOKENS ?? "4096", 10)),
 	);
+	const plannerTemp = Math.min(
+		1,
+		Math.max(0.5, Number.parseFloat(process.env.TOPIC_PLANNER_TEMPERATURE ?? "0.92")),
+	);
 	const listed = existingTitles.length
 		? existingTitles.map((t, i) => `${i + 1}. ${t}`).join("\n")
 		: "(none yet — pick diverse evergreen how-tos.)";
+
+	const slugList =
+		existingSlugs.length > 0
+			? existingSlugs
+					.slice(0, 80)
+					.map((s, i) => `${i + 1}. /blog/.../${s}/`)
+					.join("\n")
+			: "(none)";
+
+	const batchEntropy = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 9)}`;
 
 	const prompt = `You are the editorial planner for howtohack.net.
 
@@ -188,19 +343,26 @@ Site rules (must follow when proposing topics):
 - English only; practical ethical how-to content for everyday adults (not experts).
 - Legal, safe topics only — NO illegal hacking, malware, bypassing paywalls, or harmful instructions.
 - Strong search intent: fixes, setups, savings, productivity, home, software, business, online security.
-- Mix categories across: Home, Software, Business, Online (not all from one bucket).
+- Mix categories across: Home, Software, Business, Online (not all from one bucket in one batch).
 - Each topic string must be specific enough to support a 1,200+ word guide (not a single vague word).
 - Monetization-aware: informational-commercial angles are OK when honest.
+- Be CREATIVE and varied: include angles outside the usual "Windows + email + Wi-Fi" loop — e.g. cars, kitchen, pets, photography, travel tech, gardening tools, small business finance basics, smart-home hardware, streaming, fitness tech, printing/photos, cables/adapters — still practical and ethical.
+- If a product was already covered (Gmail, Windows laptop, etc.), skip that entire product/problem for this batch unless the angle is a clearly different problem (not a re-title).
 
-Already published article titles — do NOT repeat, rephrase slightly, or overlap heavily with these (pick genuinely new angles):
+Already published article titles — do NOT repeat or lightly rephrase:
 ${listed}
+
+Existing URL slug stems (your new topics must NOT produce similar slugs / same story — pick different subjects):
+${slugList}
+
+Batch entropy id (for variety): ${batchEntropy}
 
 Return ONLY valid JSON (no markdown fences) with exactly ${count} strings:
 { "topics": ["...", "..."] }
 
 Each array item is a short topic phrase (like a working title angle), not a full article.`;
 
-	const maxAttempts = Number.parseInt(process.env.TOPIC_BATCH_ATTEMPTS ?? "3", 10);
+	const maxAttempts = Number.parseInt(process.env.TOPIC_BATCH_ATTEMPTS ?? "5", 10);
 	let lastErr = null;
 
 	for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
@@ -210,6 +372,7 @@ Each array item is a short topic phrase (like a working title angle), not a full
 				modelToUse,
 				`${prompt}\n\nPlanner attempt: ${attempt}/${maxAttempts}`,
 				maxTopicTokens,
+				{ temperature: plannerTemp },
 			);
 			if (!text) throw new Error("Empty topic planner response.");
 			if (stopReason === "max_tokens") {
@@ -220,12 +383,13 @@ Each array item is a short topic phrase (like a working title angle), not a full
 			topics = [...new Set(topics.map((t) => t.replace(/\s+/g, " ").trim()))];
 			topics = topics.filter((t) => t.length >= 12);
 			topics = topics.filter((t) => !topicOverlapsExisting(t, existingTitles));
+			topics = topics.filter((t) => !topicOverlapsSlugs(t, existingSlugs));
 
 			if (topics.length >= count) {
 				console.log(`Planned ${count} fresh topic(s) (attempt ${attempt}).`);
 				return topics.slice(0, count);
 			}
-			lastErr = new Error(`Only ${topics.length} novel topics after filter (need ${count}).`);
+			lastErr = new Error(`Only ${topics.length} novel topics after title+slug filter (need ${count}).`);
 			console.warn(lastErr.message);
 		} catch (e) {
 			lastErr = e;
@@ -236,12 +400,14 @@ Each array item is a short topic phrase (like a working title angle), not a full
 	throw lastErr ?? new Error("Failed to plan fresh topics.");
 }
 
-function pickFallbackTopics(count, existingTitles) {
+function pickFallbackTopics(count, existingTitles, existingSlugs) {
 	const pool = [...FALLBACK_TOPIC_POOL].sort(() => Math.random() - 0.5);
 	const out = [];
 	for (const t of pool) {
 		if (out.length >= count) break;
-		if (!topicOverlapsExisting(t, existingTitles)) out.push(t);
+		if (topicOverlapsExisting(t, existingTitles)) continue;
+		if (topicOverlapsSlugs(t, existingSlugs)) continue;
+		out.push(t);
 	}
 	if (out.length < count) {
 		console.warn(
@@ -494,7 +660,11 @@ function normalizeImage(rawImage, title) {
 	return { url, alt, license, source };
 }
 
-async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens) {
+async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens, options = {}) {
+	const temperature =
+		typeof options.temperature === "number" && Number.isFinite(options.temperature)
+			? options.temperature
+			: 0.4;
 	const maxHttpAttempts = Math.max(1, Number.parseInt(process.env.ANTHROPIC_HTTP_RETRIES ?? "8", 10));
 	const baseMs = Math.max(500, Number.parseInt(process.env.ANTHROPIC_RETRY_BASE_MS ?? "2500", 10));
 	let lastBody = "";
@@ -510,7 +680,7 @@ async function anthropicMessage(apiKey, modelToUse, userContent, maxTokens) {
 			body: JSON.stringify({
 				model: modelToUse,
 				max_tokens: maxTokens,
-				temperature: 0.4,
+				temperature,
 				messages: [{ role: "user", content: userContent }],
 			}),
 		});
@@ -553,6 +723,8 @@ async function callClaude(topic, resolvedModel = null) {
 
 	const metaPrompt = `Generate metadata for ONE useful and ethical English article for howtohack.net.
 Topic: ${topic}
+
+The title becomes the blog URL slug (lowercase, hyphenated). Make it specific and distinctive — avoid generic titles that could match an existing guide on the same product or problem.
 
 Return only valid JSON (no markdown fences) with this structure. Do NOT include bodyMarkdown.
 {
@@ -662,6 +834,35 @@ Write the article now.`;
 	throw lastError ?? new Error("Failed to generate article after retries.");
 }
 
+const SLUG_DEDUPE_RETRIES = Math.max(1, Number.parseInt(process.env.SLUG_DEDUPE_RETRIES ?? "4", 10));
+
+/**
+ * Generate a full post; if the final title slug matches an existing or same-run article, retry with stricter instructions.
+ */
+async function generatePostAvoidingSlugCollisions(topic, modelToUse, usedSlugs) {
+	let workingTopic = topic;
+	for (let s = 0; s < SLUG_DEDUPE_RETRIES; s += 1) {
+		const post = await callClaude(workingTopic, modelToUse);
+		const safe = normalizePost(post);
+		const stem = slugify(safe.title);
+		if (!slugNearDuplicate(stem, usedSlugs)) {
+			return post;
+		}
+		console.warn(
+			`Slug "${stem}" too close to an existing post — retrying article (${s + 1}/${SLUG_DEDUPE_RETRIES})…`,
+		);
+		workingTopic = `${topic}
+
+CRITICAL DE-DUPE: Your last title produced a URL slug almost identical to an article already on howtohack.net.
+You must choose a completely different subject or audience segment. Do NOT re-cover the same core tool, OS tweak, or inbox/calendar/productivity app unless the problem statement is clearly unrelated (different use case).
+Pick a fresh niche (examples: home repair, car tech, kitchen gear, pet care tech, photography, travel adapters, small-business invoicing, smart plugs, streaming hardware — still ethical how-to).
+The new JSON title must yield a DISTINCT slug when lowercased and hyphenated.`;
+	}
+	throw new Error(
+		`Could not produce a unique URL slug after ${SLUG_DEDUPE_RETRIES} attempt(s). Last topic: ${topic.slice(0, 120)}…`,
+	);
+}
+
 async function resolveModel(apiKey) {
 	if (MODEL && MODEL.trim() !== "") {
 		return MODEL.trim();
@@ -746,19 +947,30 @@ async function main() {
 	const apiKey = process.env.ANTHROPIC_API_KEY;
 	const modelToUse = await resolveModel(apiKey);
 	const existingTitles = await loadExistingBlogTitles();
-	console.log(`Loaded ${existingTitles.length} existing title(s) to avoid duplicating.`);
+	const existingSlugs = await loadExistingSlugStems();
+	console.log(
+		`Loaded ${existingTitles.length} existing title(s) and ${existingSlugs.length} slug stem(s) to avoid duplicating.`,
+	);
+
+	const usedSlugs = [...existingSlugs];
 
 	let selectedTopics;
 	const useStaticOnly = process.env.USE_STATIC_TOPICS_ONLY === "1" || process.env.USE_STATIC_TOPICS_ONLY === "true";
 	if (useStaticOnly) {
 		console.warn("USE_STATIC_TOPICS_ONLY is set — skipping dynamic topic planner.");
-		selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles);
+		selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles, existingSlugs);
 	} else {
 		try {
-			selectedTopics = await generateFreshTopics(apiKey, modelToUse, POSTS_PER_RUN, existingTitles);
+			selectedTopics = await generateFreshTopics(
+				apiKey,
+				modelToUse,
+				POSTS_PER_RUN,
+				existingTitles,
+				existingSlugs,
+			);
 		} catch (e) {
 			console.warn(`Dynamic topic planning failed: ${e.message}`);
-			selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles);
+			selectedTopics = pickFallbackTopics(POSTS_PER_RUN, existingTitles, existingSlugs);
 		}
 	}
 
@@ -775,7 +987,9 @@ async function main() {
 
 	for (let t = 0; t < selectedTopics.length; t += 1) {
 		const topic = selectedTopics[t];
-		const post = await callClaude(topic, modelToUse);
+		const post = await generatePostAvoidingSlugCollisions(topic, modelToUse, usedSlugs);
+		const safe = normalizePost(post);
+		usedSlugs.push(slugify(safe.title));
 		const filePath = await writePostFile(post);
 		created.push(filePath);
 		generatedViaClaude += 1;
