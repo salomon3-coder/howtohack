@@ -15,6 +15,7 @@ const {
 	description = 'Practical guides to solve common home, business, and software problems the easy way.',
 	schema,
 } = Astro.props;
+const canonicalHref = new URL(`${Astro.url.pathname}${Astro.url.search}`, Astro.site ?? Astro.url.origin).toString();
 ---
 
 <!doctype html>
@@ -33,7 +34,7 @@ const {
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 		<meta name="description" content={description} />
-		<link rel="canonical" href={Astro.url.href} />
+		<link rel="canonical" href={canonicalHref} />
 		<StructuredData data={schema} />
 		<GoogleAnalytics />
 		<AdSenseLoader />

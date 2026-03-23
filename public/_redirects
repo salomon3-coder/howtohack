@@ -1,0 +1,7 @@
+# Canonical domain redirects
+http://www.howtohack.net/* https://howtohack.net/:splat 301
+https://www.howtohack.net/* https://howtohack.net/:splat 301
+http://howtohack.net/* https://howtohack.net/:splat 301
+
+# Legacy URL cleanup
+/index.php https://howtohack.net/ 301
