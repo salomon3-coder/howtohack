@@ -5,3 +5,8 @@ http://howtohack.net/* https://howtohack.net/:splat 301
 
 # Legacy URL cleanup
 /index.php https://howtohack.net/ 301
+
+# Remove low-value demo/template routes
+/article-demo https://howtohack.net/blog/ 301
+/faq-demo https://howtohack.net/blog/ 301
+/howto-demo https://howtohack.net/blog/ 301

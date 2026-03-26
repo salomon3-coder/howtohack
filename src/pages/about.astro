@@ -1,0 +1,55 @@
+---
+import Layout from "../layouts/Layout.astro";
+
+const pageTitle = "About HowToHack | Editorial Mission";
+const pageDescription =
+	"HowToHack is an independent magazine with ethical, practical guides for home, software, online safety, and business workflows.";
+
+const schema = {
+	"@context": "https://schema.org",
+	"@type": "AboutPage",
+	name: pageTitle,
+	description: pageDescription,
+	url: "https://howtohack.net/about/",
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} schema={schema}>
+	<main>
+		<article class="post">
+			<p class="eyebrow">About</p>
+			<h1>HowToHack: ethical how-to magazine</h1>
+			<p class="muted">
+				HowToHack publishes practical, legal, and easy-to-follow guides for everyday problems. The goal
+				is simple: help non-experts fix things, save time, and make better digital decisions.
+			</p>
+
+			<h2>What we publish</h2>
+			<ul>
+				<li>Step-by-step tutorials for home, software, online safety, and productivity.</li>
+				<li>Actionable checklists and plain-language explanations.</li>
+				<li>Evergreen guides updated as tools and workflows change.</li>
+			</ul>
+
+			<h2>Editorial values</h2>
+			<ul>
+				<li>Ethical and legal content only. No harmful or abusive instructions.</li>
+				<li>Reader-first writing: clear structure, examples, and realistic outcomes.</li>
+				<li>Transparency: we separate informational content from monetization elements.</li>
+			</ul>
+
+			<h2>Image and source policy</h2>
+			<p>
+				We use real, non-AI stock photos and include source/license metadata when available. We avoid
+				sensational claims and do not invent statistics.
+			</p>
+
+			<h2>Contact</h2>
+			<p>
+				Questions, corrections, or collaboration requests: <a href="mailto:contact@howtohack.net"
+					>contact@howtohack.net</a
+				>.
+			</p>
+		</article>
+	</main>
+</Layout>

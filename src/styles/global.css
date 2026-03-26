@@ -317,7 +317,8 @@ a:hover {
 
 .footer-nav {
 	display: flex;
-	gap: 1.25rem;
+	flex-wrap: wrap;
+	gap: 0.65rem 1.1rem;
 	font-weight: 600;
 }
 
@@ -1148,3 +1149,4 @@ code {
 		margin-inline: auto;
 	}
 }
+

@@ -59,6 +59,8 @@ const canonicalHref = new URL(`${Astro.url.pathname}${Astro.url.search}`, Astro.
 				<nav class="nav" aria-label="Main">
 					<a class="nav__link" href="/">Home</a>
 					<a class="nav__link" href="/blog/">Blog</a>
+					<a class="nav__link" href="/about/">About</a>
+					<a class="nav__link" href="/contact/">Contact</a>
 					<button class="theme-toggle" id="theme-toggle" type="button" aria-label="Toggle theme">
 						<span class="theme-icon" aria-hidden="true">◐</span>
 						<span class="theme-label">Dark mode</span>
@@ -81,6 +83,11 @@ const canonicalHref = new URL(`${Astro.url.pathname}${Astro.url.search}`, Astro.
 				<nav class="footer-nav" aria-label="Footer">
 					<a href="/">Home</a>
 					<a href="/blog/">Blog</a>
+					<a href="/about/">About</a>
+					<a href="/contact/">Contact</a>
+					<a href="/privacy/">Privacy</a>
+					<a href="/terms/">Terms</a>
+					<a href="/editorial-policy/">Editorial Policy</a>
 				</nav>
 				<p class="footer-copy muted">© {new Date().getFullYear()} HowToHack. Practical guides only.</p>
 			</div>

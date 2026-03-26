@@ -66,3 +66,4 @@ The layout loads tags **only if** you set these at **build time** (e.g. Cloudfla
 - The script is strict: without `ANTHROPIC_API_KEY`, the workflow fails.
 - Articles are generated as practical, ethical content.
 - For free non-AI images, you can extend the script with a free stock image API before publishing.
+`n## Trust & policy pages`n`nFor AdSense and SEO trust signals, publish and keep updated:`n- `/about/` (who you are and editorial mission)`n- `/contact/` (reachable email: `contact@howtohack.net`)`n- `/privacy/` and `/terms/``n- `/editorial-policy/` (quality, originality, corrections policy)`n
